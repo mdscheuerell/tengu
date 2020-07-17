@@ -1,2 +1,3 @@
-# tengu
-Data from the recreational tengu derby for Puget Sound blackmouth.
+# Tengu derby
+
+This repo contains the data and analysis for the recreational Tengu derby for blackmouth in Puget Sound.
