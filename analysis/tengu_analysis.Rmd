@@ -1,0 +1,33 @@
+---
+title: "Shifts in the size of fish from a culturally important recreational fishery"
+author: "Mark Scheuerell"
+date: "`r format(Sys.Date(), "%d %B %Y")`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## set data dir
+datadir <- here::here("data")
+```
+
+# Background
+
+
+# Data
+
+The original data were provided to me by Tom Quinn on 16 June 2020 in the form of an MS Excel file titled `Tengu_derby_leaders through 2019 derby.xls`. I exported the one worksheet of interest (`data in kg`) as `~/data/tengu_derby_data.csv`.
+
+```{r import_data}
+## import raw data
+raw_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
+```
+
+## Fishing effort
+
+This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished.
+
+
+
+
