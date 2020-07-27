@@ -1,8 +1,12 @@
 ---
 title: "Shifts in the size of fish from a culturally important recreational fishery"
 author: "Mark Scheuerell"
-date: "`r format(Sys.Date(), "%d %B %Y")`"
-output: pdf_document
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  pdf_document:
+    highlight: haddock
+fontsize: 11pt
+geometry: margin=1in
 ---
 
 ```{r setup, include=FALSE}
@@ -26,7 +30,50 @@ raw_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
 
 ## Fishing effort
 
-This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished.
+This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Thus, it would seem that we could use
+
+1) the total number of anglers that fished in any given year;
+
+2) the total number of days the derby was open in any given year; or
+
+3) a combination of anglers and days based on some assumptions about the total number of days the average angler fished.
+
+### Simulation study
+
+```{r sim_cpue}
+set.seed(666)
+## number of Monte Carlo experiments
+nn <- 1000
+## length of time series
+tt <- 70
+## placeholder for CPUE
+ee <- rep(NA, tt)
+## correlations with days (d) and anglers (a)
+cor_d <- rep(NA, nn)
+cor_a <- rep(NA, nn)
+## loop over MC experiments
+for(i in 1:nn) {
+  ## generate days and anglers for each year
+  dd <- sample(seq(2,13), tt, replace = TRUE)
+  aa <- sample(seq(27,190), tt, replace = TRUE)
+  ## get effort for each year
+  for(t in 1:tt) {
+    ee[t] <- sum(sample(seq(dd[t]), aa[t], replace = TRUE))
+  }
+  ## correlations b/t CPUE and days, anglers
+  cor_d[i] <- cor(ee, dd)
+  cor_a[i] <- cor(ee, aa)
+}
+## median & 90% quantiles
+## days
+round(quantile(cor_d, c(5, 50, 95) / 100), 2)
+## anglers
+round(quantile(cor_a, c(5, 50, 95) / 100), 2)
+```
+
+The median correlation between the true effort and the number of anglers was `r signif(median(cor_d), 2)`; the median correlation between the true effort and the number of anglers was `r signif(median(cor_a), 2)`. 
+
+
 
 
 
