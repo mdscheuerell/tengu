@@ -1,13 +1,15 @@
 
 set.seed(666)
 
+nn <- 1000
+
 tt <- 70
 
 ee <- rep(NA, tt)
 
-cc <- matrix(NA, 100, 2)
+cc <- matrix(NA, nn, 2)
 
-for(i in 1:100) {
+for(i in 1:nn) {
   
   dd <- sample(seq(2,13), tt, replace = TRUE)
   aa <- sample(seq(27,190), tt, replace = TRUE)
@@ -22,8 +24,8 @@ for(i in 1:100) {
 }
 
 ## median & 90% quantiles
-quantile(cc[,1], c(5, 50, 95)/100)
-quantile(cc[,2], c(5, 50, 95)/100)
+quantile(cc[,1], c(5, 50, 95) / 100)
+quantile(cc[,2], c(5, 50, 95) / 100)
 
 plot.ts(cbind(dd, aa, ee))
 
