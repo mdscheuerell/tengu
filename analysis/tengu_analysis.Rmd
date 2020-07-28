@@ -29,52 +29,7 @@ raw_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
 
 ## Fishing effort
 
-This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Thus, it would seem that we could use
-
-1) the total number of anglers that fished in any given year;
-
-2) the total number of days the derby was open in any given year; or
-
-3) a combination of anglers and days based on some assumptions about the total number of days the average angler fished.
-
-### Simulation study
-
-Although one should expect that CPUE and either the number of anglers or days of fishing would be correlated, it's not immediately clear as to which of them would be moreso. Thus, I conducted a simple simulation to determine whether the number of anglers or days of fishing was more correlated with CPUE. I also included an additional metric for comparison: the total number of days the derby was open in a given year multiplied by the total number of participants registered in that same year. This third metric assumes all anglers fish every day the derby is open, but any deviations from that assumption should not vary systematically over time. 
-
-```{r sim_cpue}
-set.seed(666)
-## number of Monte Carlo experiments
-nn <- 1000
-## length of time series (years)
-tt <- 70
-## placeholder for CPUE
-ee <- rep(NA, tt)
-## correlations with days (d) and anglers (a)
-cor_d <- rep(NA, nn)
-cor_a <- rep(NA, nn)
-## loop over MC experiments
-for(i in 1:nn) {
-  ## generate days of fishing for each year
-  dd <- sample(seq(2,13), tt, replace = TRUE)
-  ## generate anglers for each year
-  aa <- sample(seq(27,190), tt, replace = TRUE)
-  ## get true effort for each year
-  for(t in 1:tt) {
-    ee[t] <- sum(sample(seq(dd[t]), aa[t], replace = TRUE))
-  }
-  ## correlations b/t CPUE and days, anglers
-  cor_d[i] <- cor(ee, dd)
-  cor_a[i] <- cor(ee, aa)
-}
-## median & 90% quantiles
-## days
-round(quantile(cor_d, c(5, 50, 95) / 100), 2)
-## anglers
-round(quantile(cor_a, c(5, 50, 95) / 100), 2)
-```
-
-The median correlation between the true effort and the number of anglers was `r signif(median(cor_d), 2)`; the median correlation between the true effort and the number of anglers was `r signif(median(cor_a), 2)`. 
-
+This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.I
 
 
 
