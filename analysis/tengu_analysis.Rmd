@@ -11,7 +11,18 @@ geometry: margin=1in
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+
 library(dplyr)
+
+## plot hook to increase margins
+local({
+  hook_old <- knitr::knit_hooks$get("plot")  # save the old hook
+  knitr::knit_hooks$set(plot = function(x, options) {
+    x <- c("\\vspace{0.5in}", hook_old(x, options))
+  })
+})
+
+## better captions
 library("captioner")
 ## set default caption delimter
 fig_cap <- captioner(suffix = ".", style = "b", style_prefix = TRUE)
@@ -57,8 +68,6 @@ plot.ts(ts(cpue, start = min(raw_data$year)), las = 1, log = "y",
 \setlength{\leftskip}{0in}
 \setlength{\rightskip}{0in}
 
-\vspace{0.25in}
-
 
 # Analysis
 
@@ -73,6 +82,8 @@ c_t = c_{t-1} + e_t
 \end{equation}
 
 where $c_t$ is the log$_e$-transformed CPUE, $u$ is a bias term, and $e_t \sim \text{N}(0, \sigma)$.
+
+## Fit models
 
 ```{r fit_cpue_models}
 ## model setup
@@ -94,6 +105,6 @@ mod_list$U <- matrix(0)
 mod_2 <- MARSS::MARSS(yy, model = mod_list)
 ```
 
-
+The model with a bias term has an AICc value ~2 units greater than the model without a bias term, suggesting there is no data support for a downwrd trend in the CPUE over time.
 
 
