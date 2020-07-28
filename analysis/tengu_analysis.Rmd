@@ -11,9 +11,6 @@ geometry: margin=1in
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
-## set data dir
-datadir <- here::here("data")
 ```
 
 # Background
@@ -24,6 +21,8 @@ datadir <- here::here("data")
 The original data were provided to me by Tom Quinn on 16 June 2020 in the form of an MS Excel file titled `Tengu_derby_leaders through 2019 derby.xls`. I exported the one worksheet of interest (`data in kg`) as `~/data/tengu_derby_data.csv`.
 
 ```{r import_data}
+## set data dir
+datadir <- here::here("data")
 ## import raw data
 raw_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
 ```
@@ -40,11 +39,13 @@ This dataset lacks the necessary detail to calculate a proper index of the catch
 
 ### Simulation study
 
+Although one should expect that CPUE and either the number of anglers or days of fishing would be correlated, it's not immediately clear as to which of them would be moreso. Thus, I conducted a simple simulation to determine whether the number of anglers or days of fishing was more correlated with CPUE. I also included an additional metric for comparison: the total number of days the derby was open in a given year multiplied by the total number of participants registered in that same year. This third metric assumes all anglers fish every day the derby is open, but any deviations from that assumption should not vary systematically over time. 
+
 ```{r sim_cpue}
 set.seed(666)
 ## number of Monte Carlo experiments
 nn <- 1000
-## length of time series
+## length of time series (years)
 tt <- 70
 ## placeholder for CPUE
 ee <- rep(NA, tt)
@@ -53,10 +54,11 @@ cor_d <- rep(NA, nn)
 cor_a <- rep(NA, nn)
 ## loop over MC experiments
 for(i in 1:nn) {
-  ## generate days and anglers for each year
+  ## generate days of fishing for each year
   dd <- sample(seq(2,13), tt, replace = TRUE)
+  ## generate anglers for each year
   aa <- sample(seq(27,190), tt, replace = TRUE)
-  ## get effort for each year
+  ## get true effort for each year
   for(t in 1:tt) {
     ee[t] <- sum(sample(seq(dd[t]), aa[t], replace = TRUE))
   }
