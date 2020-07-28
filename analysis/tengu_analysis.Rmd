@@ -10,7 +10,8 @@ geometry: margin=1in
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+library(dplyr)
 ```
 
 # Background
@@ -29,9 +30,32 @@ raw_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
 
 ## Fishing effort
 
-This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.I
+This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.
+
+```{r calculate_cpue, fig.dim = c(6, 4)}
+## CPUE
+cpue <- raw_data$total_catch / (raw_data$days * raw_data$members)
+## time serie plot of CPUE
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(cpue, start = min(raw_data$year)), ylab = "CPUE", xlab = "Year", las = 1)
+```
+
+\vspace{0.25in}
 
 
+# Analysis
+
+The CPUE appears to generally decline over time, so I fit two random walk models (with and without a bias term) to estimate the data support for a decline. Because CPUE is necessarily bounded by zero at a minimum, I fit models to the log-transformed CPUE. Specifically, the models are
+
+\begin{equation}
+c_t = c_{t-1} + u + e_t
+\end{equation}
+
+and \begin{equation}
+c_t = c_{t-1} + e_t
+\end{equation}
+
+where $c_t$ is the log$_e$-transformed CPUE, $u$ is a bias term, and $e_t \sim \text{N}(0, \sigma)$.
 
 
 
