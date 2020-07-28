@@ -12,6 +12,9 @@ geometry: margin=1in
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 library(dplyr)
+library("captioner")
+## set default caption delimter
+fig_cap <- captioner(suffix = ".", style = "b", style_prefix = TRUE)
 ```
 
 # Background
@@ -35,10 +38,24 @@ This dataset lacks the necessary detail to calculate a proper index of the catch
 ```{r calculate_cpue, fig.dim = c(6, 4)}
 ## CPUE
 cpue <- raw_data$total_catch / (raw_data$days * raw_data$members)
+
 ## time serie plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(raw_data$year)), ylab = "CPUE", xlab = "Year", las = 1)
+plot.ts(ts(cpue, start = min(raw_data$year)), las = 1, log = "y",
+        ylab = "CPUE", xlab = "Year")
 ```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(1, caption = "Time series of catch per unit effort of blackmouth from the Tengu Derby. Note that the y-axis is on a natural log scale.", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
 
 \vspace{0.25in}
 
@@ -56,6 +73,27 @@ c_t = c_{t-1} + e_t
 \end{equation}
 
 where $c_t$ is the log$_e$-transformed CPUE, $u$ is a bias term, and $e_t \sim \text{N}(0, \sigma)$.
+
+```{r fit_cpue_models}
+## model setup
+mod_list <- list(
+  B = matrix(1),
+  U = matrix("u"),
+  Q = matrix("q"),
+  Z = matrix(1),
+  A = matrix(0),
+  R = matrix(0)
+)
+yy <- matrix(log(cpue), nrow = 1)
+
+## model 1
+mod_1 <- MARSS::MARSS(yy, model = mod_list)
+
+## model 2
+mod_list$U <- matrix(0)
+mod_2 <- MARSS::MARSS(yy, model = mod_list)
+```
+
 
 
 
