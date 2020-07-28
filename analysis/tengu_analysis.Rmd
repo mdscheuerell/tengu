@@ -50,7 +50,7 @@ This dataset lacks the necessary detail to calculate a proper index of the catch
 ## CPUE
 cpue <- raw_data$total_catch / (raw_data$days * raw_data$members)
 
-## time serie plot of CPUE
+## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 plot.ts(ts(cpue, start = min(raw_data$year)), lwd = 2, col = "blue",
         las = 1, log = "y",
@@ -99,16 +99,19 @@ mod_list <- list(
 )
 yy <- matrix(log(cpue), nrow = 1)
 
-## model 1
+## fit model with bias (Eqn 1)
 mod_1 <- MARSS::MARSS(yy, model = mod_list)
 
-## model 2
+## 95% CI for bias
+mod_1 <- MARSS::MARSSparamCIs(mod_1)
+
+## fit model without bias (Eqn 2)
 mod_list$U <- matrix(0)
 mod_2 <- MARSS::MARSS(yy, model = mod_list)
 ```
 
 \vspace{0.25in}
 
-The model with a bias term has an AICc value ~2 units greater than the model without a bias term, suggesting there is no data support for a downwrd trend in the CPUE over time.
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(mod_1$par.lowCI$U, mod_1$par.upCI$U), 2)`) and the model with a bias term has an AICc value ~2 units greater than the model without a bias term, suggesting there is no data support for a downwrd trend in the CPUE over time.
 
 
