@@ -72,7 +72,7 @@ axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
 \setlength{\rightskip}{0in}
 
 
-# Catch analysis
+# Changes in catch over time
 
 The CPUE appears to generally decline over time, so I fit two random walk models (with and without a bias term) to estimate the data support for a decline. Because CPUE is necessarily bounded by zero at a minimum, I fit models to the log-transformed CPUE. Specifically, the models are
 
@@ -140,12 +140,72 @@ plot.ts(ts(rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
 
 \small
 
-`r fig_cap(2, caption = "Time series of residuals from the random walk model (Eqn 2).", display = "full")` 
+`r fig_cap(2, caption = "Time series of the residuals from the random walk model (Eqn 2).", display = "full")` 
 
 \normalsize
 
 \setlength{\leftskip}{0in}
 \setlength{\rightskip}{0in}
 
-The residuals do indeed appear to heteroscedastic with increasing variance over time. The model was fit to log-transformed CPUE, so it's not clear another transformation would help.
+\vspace{0.25in}
+
+The residuals do indeed appear heteroscedastic with increasing variance over time. The model was fit to log-transformed CPUE, so it's not clear another transformation would help.
+
+
+# Changes in fish size over time
+
+The data set contains three different indicators of fish size over time:
+
+1) the total number of fish over 10 pounds (~4.55 kg);
+
+2) the total number of fish over 5 pounds (~2.27 kg); and
+
+3) the masses (kg) of the 5 largest fish.
+
+Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how they relate to (3), I summed the sizes of the 5 largest fish and compare that metric to (1) and (2). Here are the correlations among the three.
+
+```{r size_corr}
+## total mass of 5 largest fish
+sum_of_top_5 <- apply(raw_data[,c(9:13)], 1, sum, na.rm = TRUE)
+
+## 3 size metrics
+fish_sizes <- cbind("N over 10 lbs" = raw_data$n_over_10,
+                    "N over 5 lbs" = raw_data$n_over_5,
+                    "Sum of top 5 (kg)" = sum_of_top_5) %>%
+  ts(start = min(raw_data$year))
+
+## correlation among the 3 metrics
+cor(fish_sizes, use = "pairwise.complete.obs") %>%
+  round(2)
+```
+
+\vspace{0.25in}
+
+As suspected, all three metrics are correlated, with the total number of fish over 10 pounds and the total mass (kg) of the five largest fish being particularly so.
+
+Here are plots of the three size metrics over time.
+
+```{r ts_plot_sizes, fig.dim = c(6, 8)}
+## time series plot of fish size metrics
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(fish_sizes, main = "",
+        lwd = 2, col = "blue", yax.flip = TRUE,
+        ylab = c("", "", ""), xlab = "Year")
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(3, caption = "Time series of fish size over time, including the total number of fish over 10 pounds (top), the total number of fish over 5 pounds (middle), and the total mass (kg) of the five largest fish (bottom).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+
 
