@@ -13,6 +13,7 @@ geometry: margin=1in
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 
 library(dplyr)
+library(MARSS)
 
 ## plot hook to increase margins
 local({
@@ -71,7 +72,7 @@ axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
 \setlength{\rightskip}{0in}
 
 
-# Analysis
+# Catch analysis
 
 The CPUE appears to generally decline over time, so I fit two random walk models (with and without a bias term) to estimate the data support for a decline. Because CPUE is necessarily bounded by zero at a minimum, I fit models to the log-transformed CPUE. Specifically, the models are
 
@@ -85,9 +86,7 @@ c_t = c_{t-1} + e_t
 
 where $c_t$ is the log$_e$-transformed CPUE, $u$ is a bias term, and $e_t \sim \text{N}(0, \sigma)$.
 
-## Fit models
-
-```{r fit_cpue_models}
+```{r model_setup}
 ## model setup
 mod_list <- list(
   B = matrix(1),
@@ -98,20 +97,55 @@ mod_list <- list(
   R = matrix(0)
 )
 yy <- matrix(log(cpue), nrow = 1)
+```
 
+## Fit biased random walk
+
+```{r biased_RW}
 ## fit model with bias (Eqn 1)
-mod_1 <- MARSS::MARSS(yy, model = mod_list)
+mod_1 <- MARSS(yy, model = mod_list)
 
 ## 95% CI for bias
-mod_1 <- MARSS::MARSSparamCIs(mod_1)
+mod_1 <- MARSSparamCIs(mod_1)
+```
 
+## Fit unbiased random walk
+
+```{r unbiased_RW}
 ## fit model without bias (Eqn 2)
 mod_list$U <- matrix(0)
-mod_2 <- MARSS::MARSS(yy, model = mod_list)
+mod_2 <- MARSS(yy, model = mod_list)
 ```
 
 \vspace{0.25in}
 
 The 95% confidence interval for the bias term $(u)$ is (`r round(c(mod_1$par.lowCI$U, mod_1$par.upCI$U), 2)`) and the model with a bias term has an AICc value ~2 units greater than the model without a bias term, suggesting there is no data support for a downwrd trend in the CPUE over time.
 
+## Variance in catch over time
+
+The time series of CPUE (Figure 1) appears to exhibit increasing variance over time, so here is a plot of the residuals from the better fitting random walk model (Eqn 2).
+
+```{r plot_RW_resids, fig.dim = c(6, 4)}
+## Model residuals
+rw_resids <- t(residuals(mod_2)$state.residuals)
+
+## time series plot of CPUE
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
+        las = 1, ylab = "Model residuals", xlab = "Year")
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(2, caption = "Time series of residuals from the random walk model (Eqn 2).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+The residuals do indeed appear to heteroscedastic with increasing variance over time. The model was fit to log-transformed CPUE, so it's not clear another transformation would help.
 
