@@ -29,8 +29,6 @@ library("captioner")
 fig_cap <- captioner(suffix = ".", style = "b", style_prefix = TRUE)
 ```
 
-# Background
-
 
 # Data
 
@@ -96,30 +94,31 @@ mod_list <- list(
   A = matrix(0),
   R = matrix(0)
 )
-yy <- matrix(log(cpue), nrow = 1)
+## response
+l_cpue <- matrix(log(cpue), nrow = 1)
 ```
 
 ## Fit biased random walk
 
-```{r biased_RW}
+```{r biased_RW_CPUE}
 ## fit model with bias (Eqn 1)
-mod_1 <- MARSS(yy, model = mod_list)
+cpue_brw <- MARSS(l_cpue, model = mod_list)
 
 ## 95% CI for bias
-mod_1 <- MARSSparamCIs(mod_1)
+cpue_brw <- MARSSparamCIs(cpue_brw)
 ```
 
 ## Fit unbiased random walk
 
-```{r unbiased_RW}
+```{r unbiased_RW_CPUE}
 ## fit model without bias (Eqn 2)
 mod_list$U <- matrix(0)
-mod_2 <- MARSS(yy, model = mod_list)
+cpue_rw <- MARSS(l_cpue, model = mod_list)
 ```
 
 \vspace{0.25in}
 
-The 95% confidence interval for the bias term $(u)$ is (`r round(c(mod_1$par.lowCI$U, mod_1$par.upCI$U), 2)`) and the model with a bias term has an AICc value ~2 units greater than the model without a bias term, suggesting there is no data support for a downwrd trend in the CPUE over time.
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.lowCI$U, cpue_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(cpue_rw, cpue_brw)$AIC), 1)` units greater than the model without a bias term, suggesting there is no data support for a systematic downward trend in the log-transformed CPUE over time.
 
 ## Variance in catch over time
 
@@ -127,7 +126,7 @@ The time series of CPUE (Figure 1) appears to exhibit increasing variance over t
 
 ```{r plot_RW_resids, fig.dim = c(6, 4)}
 ## Model residuals
-rw_resids <- t(residuals(mod_2)$state.residuals)
+rw_resids <- t(residuals(cpue_rw)$state.residuals)
 
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
@@ -167,6 +166,7 @@ Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how th
 ```{r size_corr}
 ## total mass of 5 largest fish
 sum_of_top_5 <- apply(raw_data[,c(9:13)], 1, sum, na.rm = TRUE)
+sum_of_top_5[sum_of_top_5 == 0] <- NA
 
 ## 3 size metrics
 fish_sizes <- cbind("N over 10 lbs" = raw_data$n_over_10,
@@ -188,8 +188,8 @@ Here are plots of the three size metrics over time.
 ```{r ts_plot_sizes, fig.dim = c(6, 8)}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(fish_sizes, main = "",
-        lwd = 2, col = "blue", yax.flip = TRUE,
+plot.ts(fish_sizes, lwd = 2, col = "blue",
+        main = "", yax.flip = TRUE,
         ylab = c("", "", ""), xlab = "Year")
 ```
 
@@ -207,5 +207,44 @@ plot.ts(fish_sizes, main = "",
 
 \vspace{0.25in}
 
+There appears to be an overall decline in fish size from the mid 1940s until the mid 1980s, when fish sizes increased rapidly before declining again until present.
 
+
+## Fit biased random walk
+
+Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here I use the log-transformed sum of the five largest fish.
+
+```{r model_setup_2}
+## model setup
+mod_list <- list(
+  B = matrix(1),
+  U = matrix("u"),
+  Q = matrix("q"),
+  Z = matrix(1),
+  A = matrix(0),
+  R = matrix(0)
+)
+## response
+l_size <- matrix(log(sum_of_top_5), nrow = 1)
+```
+
+```{r biased_RW_size}
+## fit model with bias (Eqn 1)
+size_brw <- MARSS(l_size, model = mod_list)
+
+## 95% CI for bias
+size_brw <- MARSSparamCIs(size_brw)
+```
+
+## Fit unbiased random walk
+
+```{r unbiased_RW_size}
+## fit model without bias (Eqn 2)
+mod_list$U <- matrix(0)
+size_rw <- MARSS(l_size, model = mod_list)
+```
+
+\vspace{0.25in}
+
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(size_rw, size_brw)$AIC), 1)` units greater than the model without a bias term, suggesting there is no data support for a systematic downward trend in the log-transformed size over time.
 
