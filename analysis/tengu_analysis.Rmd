@@ -72,17 +72,27 @@ axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
 
 # Changes in catch over time
 
-The CPUE appears to generally decline over time, so I fit two random walk models (with and without a bias term) to estimate the data support for a decline. Because CPUE is necessarily bounded by zero at a minimum, I fit models to the log-transformed CPUE. Specifically, the models are
+We can model CPUE data with a state-space model, such that the observed CPUE are treated as an index of the general abundance of blackmouth within this region of Puget Sound. Because the CPUE appears to generally decline over time, I fit two different state models:
+
+1) a normal random walk; and 
+
+2) a biased random walk.
+
+Because CPUE is necessarily bounded by zero at a minimum, I fit models to the log-transformed CPUE. Specifically, the models are defined as
 
 \begin{equation}
-c_t = c_{t-1} + u + e_t
+c_t = x_t + v_t
 \end{equation}
 
-and \begin{equation}
-c_t = c_{t-1} + e_t
-\end{equation}
+and
 
-where $c_t$ is the log$_e$-transformed CPUE, $u$ is a bias term, and $e_t \sim \text{N}(0, \sigma)$.
+\begin{gather}
+x_t = x_{t-1} + u + w_t \\
+\text{or} \nonumber \\
+x_t = x_{t-1} + w_t
+\end{gather}
+
+where $c_t$ is the log$_e$-transformed CPUE, $x_t$ is the true, but unobserved abundance of blackmouth, $u$ is a bias term, and $v_t \sim \text{N}(0, \sigma_y)$ and $w_t \sim \text{N}(0, \sigma_c)$.
 
 ```{r model_setup}
 ## model setup
@@ -92,16 +102,17 @@ mod_list <- list(
   Q = matrix("q"),
   Z = matrix(1),
   A = matrix(0),
-  R = matrix(0)
+  R = matrix("r")
 )
+
 ## response
 l_cpue <- matrix(log(cpue), nrow = 1)
 ```
 
 ## Fit biased random walk
 
-```{r biased_RW_CPUE}
-## fit model with bias (Eqn 1)
+```{r biased_RW_CPUE, cache = TRUE}
+## fit model with bias (Eqn 2)
 cpue_brw <- MARSS(l_cpue, model = mod_list)
 
 ## 95% CI for bias
@@ -110,28 +121,26 @@ cpue_brw <- MARSSparamCIs(cpue_brw)
 
 ## Fit unbiased random walk
 
-```{r unbiased_RW_CPUE}
-## fit model without bias (Eqn 2)
+```{r unbiased_RW_CPUE, cache = TRUE}
+## fit model without bias (Eqn 3)
 mod_list$U <- matrix(0)
 cpue_rw <- MARSS(l_cpue, model = mod_list)
 ```
 
 \vspace{0.25in}
 
-The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.lowCI$U, cpue_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(cpue_rw, cpue_brw)$AIC), 1)` units greater than the model without a bias term, suggesting there is no data support for a systematic downward trend in the log-transformed CPUE over time.
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.lowCI$U, cpue_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(cpue_brw, cpue_rw)$AIC), 1)` units lower than the model without a bias term, suggesting there is indeed data support for a systematic downward trend in the log-transformed CPUE over time.
 
-## Variance in catch over time
-
-The time series of CPUE (Figure 1) appears to exhibit increasing variance over time, so here is a plot of the residuals from the better fitting random walk model (Eqn 2).
+## Model fit to CPUE
 
 ```{r plot_cpue_rw_resids, fig.dim = c(6, 4)}
-## Model residuals
-cpue_rw_resids <- t(residuals(cpue_rw)$state.residuals)
-
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue_rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
-        las = 1, ylab = "Model residuals", xlab = "Year")
+plot.ts(ts(cpue, start = min(raw_data$year)), lwd = 2, col = "blue",
+        las = 1, log = "y",
+        ylab = "CPUE", xlab = "Year", yaxt = "n")
+axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
+lines(ts(t(exp(cpue_brw$states)), start = min(raw_data$year)))
 ```
 
 \setlength{\leftskip}{0.5in}
@@ -139,7 +148,7 @@ plot.ts(ts(cpue_rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
 
 \small
 
-`r fig_cap(2, caption = "Time series of the residuals from the random walk model (Eqn 2).", display = "full")` 
+`r fig_cap(2, caption = "Time series of observed CPUE (blue) and the fit for the biased random walk model (Eqn 2; black).", display = "full")` 
 
 \normalsize
 
@@ -147,8 +156,6 @@ plot.ts(ts(cpue_rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
 \setlength{\rightskip}{0in}
 
 \vspace{0.25in}
-
-The residuals do indeed appear heteroscedastic with increasing variance over time. The model was fit to log-transformed CPUE, so it's not clear another transformation would help.
 
 
 # Changes in fish size over time
@@ -207,12 +214,12 @@ plot.ts(fish_sizes, lwd = 2, col = "blue",
 
 \vspace{0.25in}
 
-There appears to be an overall decline in fish size from the mid 1940s until the mid 1980s, when fish sizes increased rapidly before declining again until present.
+There appears to be an overall decline in fish size from the mid 1940s until the early 1980s, when fish sizes increased rapidly before declining again until present.
 
 
 ## Fit biased random walk
 
-Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here I use the log-transformed sum of the five largest fish.
+Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here I use the log-transformed sum of the five largest fish (ie, `log(sum_of_top_5)`).
 
 ```{r model_setup_2}
 ## model setup
@@ -222,7 +229,7 @@ mod_list <- list(
   Q = matrix("q"),
   Z = matrix(1),
   A = matrix(0),
-  R = matrix(0)
+  R = matrix("r")
 )
 ## response
 l_size <- matrix(log(sum_of_top_5), nrow = 1)
@@ -246,15 +253,15 @@ size_rw <- MARSS(l_size, model = mod_list)
 
 \vspace{0.25in}
 
-The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(size_rw, size_brw)$AIC), 1)` units greater than the model without a bias term, suggesting there is no data support for a systematic downward trend in the log-transformed size over time.
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(diff(AIC(size_brw, size_rw)$AIC), 1)` units lower than the model without a bias term, suggesting there is very little data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
 
 ### Model fit to size data
 
 ```{r plot_size_rw, fig.dim = c(6, 4)}
 ## time series plot of size & model fit
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(t(l_size), start = min(raw_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(sum_of_top_5, start = min(raw_data$year)), lwd = 2, col = "blue",
         las = 1, ylab = "Sum of top 5 (kg)", xlab = "Year")
-lines(ts(t(size_brw$states), start = min(raw_data$year)))
+lines(ts(t(exp(size_rw$states)), start = min(raw_data$year)))
 ```
 
