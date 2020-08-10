@@ -131,11 +131,11 @@ cpue_rw <- MARSS(l_cpue, model = mod_list)
 
 \vspace{0.25in}
 
-The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.lowCI$U, cpue_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(cpue_brw, cpue_rw)$AIC), 1)` units lower than the model without a bias term, suggesting there is indeed data support for a systematic downward trend in the log-transformed CPUE over time.
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.lowCI$U, cpue_brw$par.upCI$U), 2)`), and the model with a bias term has an AICc value ~`r round(cpue_rw$AICc - cpue_brw$AICc, 1)` units lower than the model without a bias term, suggesting there is indeed some data support for a systematic downward trend in the log-transformed CPUE over time.
 
 ## Model fit to CPUE
 
-```{r plot_cpue_rw_resids, fig.dim = c(6, 4)}
+```{r plot_cpue_rw_fit, fig.dim = c(6, 4)}
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "blue",
@@ -174,13 +174,13 @@ Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how th
 
 ```{r size_corr}
 ## total mass of 5 largest fish
-sum_of_top_5 <- apply(tengu_data[,c(9:13)], 1, sum, na.rm = TRUE)
-sum_of_top_5[sum_of_top_5 == 0] <- NA
+mean_of_top_5 <- apply(tengu_data[,c(9:13)], 1, mean, na.rm = TRUE)
+mean_of_top_5[is.nan(mean_of_top_5)] <- NA
 
 ## 3 size metrics
-fish_sizes <- cbind("N over 10 lbs" = tengu_data$n_over_10,
-                    "N over 5 lbs" = tengu_data$n_over_5,
-                    "Sum of top 5 (kg)" = sum_of_top_5) %>%
+fish_sizes <- cbind("Number over 10 lbs" = tengu_data$n_over_10,
+                    "Number over 5 lbs" = tengu_data$n_over_5,
+                    "Mean mass of top 5 (kg)" = mean_of_top_5) %>%
   ts(start = min(tengu_data$year))
 
 ## correlation among the 3 metrics
@@ -221,7 +221,7 @@ There appears to be an overall decline in fish size from the mid 1940s until the
 
 ## Fit biased random walk
 
-Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here I use the log-transformed sum of the five largest fish (ie, `log(sum_of_top_5)`).
+Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here I use the log-transformed sum of the five largest fish (ie, `log(mean_of_top_5)`).
 
 ```{r model_setup_2}
 ## model setup
@@ -234,7 +234,7 @@ mod_list <- list(
   R = matrix("r")
 )
 ## response
-l_size <- matrix(log(sum_of_top_5), nrow = 1)
+l_size <- matrix(log(mean_of_top_5), nrow = 1)
 ```
 
 ```{r biased_RW_size}
@@ -255,28 +255,42 @@ size_rw <- MARSS(l_size, model = mod_list)
 
 \vspace{0.25in}
 
-The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(diff(AIC(size_brw, size_rw)$AIC), 1)` units lower than the model without a bias term, suggesting there is very little data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw$AICc - size_brw$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
 
-### Model fit to size data
+## Model fit to size data
 
 ```{r plot_size_rw, fig.dim = c(6, 4)}
 ## time series plot of size & model fit
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(sum_of_top_5, start = min(tengu_data$year)), lwd = 2, col = "blue",
-        las = 1, ylab = "Sum of top 5 (kg)", xlab = "Year")
+plot.ts(ts(mean_of_top_5, start = min(tengu_data$year)), lwd = 2, col = "blue",
+        las = 1, ylab = "Mean of top 5 (kg)", xlab = "Year")
 lines(ts(t(exp(size_rw$states)), start = min(tengu_data$year)))
 ```
 
 # Comparisons between the Tengu Derby & WDFW
 
-Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in abundance and size over time. Here I investigate whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
+Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in size over time. I investigated whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
 
 \begin{gather}
 \mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t \\
 \mathbf{x}_t = \mathbf{x}_{t-1} + \mathbf{w}_t
 \end{gather}
 
-For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For the model with only one state of nature, $\mathbf{Z}$ is a $[2 \times 1]$ vector of 1's, $\mathbf{x}_t$ is a $[1 \times 1]$ scalar of the true state, and $\mathbf{w}_t \sim \text{N}(0, q)$, such that
+For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For both models, I assumed that the observation errors at time $t$ $(\mathbf{v}_t)$ are independent and differently distributed, such that 
+
+$$
+\mathbf{R} =
+\begin{bmatrix}
+r_1 & 0 \\
+0 & r_2
+\end{bmatrix}
+$$
+
+The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
+
+## One pattern over time
+
+For the model with only one state of nature, $\mathbf{Z}$ is a $[2 \times 1]$ vector of 1's, $\mathbf{x}_t$ is a $[1 \times 1]$ scalar of the true state, and $\mathbf{w}_t \sim \text{N}(0, q)$, such that
 
 \begin{gather}
 \begin{bmatrix}
@@ -301,6 +315,28 @@ v_\text{WDFW}
 \\
 x_t = x_{t-1} + w_t
 \end{gather}
+
+```{r ssm_one}
+## select common data
+yy <- cbind(mean_of_top_5[tengu_data$year >= 1970 & tengu_data$year <= 2015],
+            wdfw_data$size[wdfw_data$year >= 1970])
+
+## model defn for Eqns 6 & 7
+mod_list <- list(
+  B = matrix(1),
+  U = matrix(0),
+  Q = matrix("q"),
+  Z = matrix(1, nrow = 2, ncol = 1),
+  A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit Eqns 6 & 7
+size_both_1 <- MARSS(t(log(yy)), model = mod_list)
+```
+
+
+## Two patterns over time
 
 For the model with two different states of nature, $\mathbf{Z}$ is a $[2 \times 2]$ identity matrix, $\mathbf{x}_t$ is a $[2 \times 1]$ vector of the true states, and $\mathbf{w}_t \sim \text{MVN}(\mathbf{0}, \mathbf{Q})$, such that
 
@@ -345,13 +381,28 @@ w_\text{WDFW}
 \end{bmatrix}_t
 \end{gather}
 
+```{r ssm_two}
+## model defn for Eqns 8 & 9
+mod_list <- list(
+  B = diag(2),
+  U = matrix(0, nrow = 2, ncol = 1),
+  Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  Z = diag(2),
+  A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
 
-## Changes in abundance over time
+## fit Eqns 8 & 9
+size_both_2 <- MARSS(t(log(yy)), model = mod_list)
+```
 
+\vspace{0.25in}
 
+## Summary of size comparison
 
+The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather modest support for two unique temporal patterns in the data.
 
-## Changes in size over time
+```{r plot_ssm_two}
 
-
+```
 
