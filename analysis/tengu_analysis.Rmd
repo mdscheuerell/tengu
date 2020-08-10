@@ -32,26 +32,28 @@ fig_cap <- captioner(suffix = ".", style = "b", style_prefix = TRUE)
 
 # Data
 
-The original data were provided to me by Tom Quinn on 16 June 2020 in the form of an MS Excel file titled `Tengu_derby_leaders through 2019 derby.xls`. I exported the one worksheet of interest (`data in kg`) as `~/data/tengu_derby_data.csv`.
+The original Tengu Derby data were provided to me by Tom Quinn on 16 June 2020 in the form of an MS Excel file titled `Tengu_derby_leaders through 2019 derby.xls`. I exported one worksheet of interest (`data in kg`) as `~/data/tengu_derby_data.csv`. The same Excel file also included a worksheet with information from WDFW on the number of natural- and hatchery-origin Chinook, and the mean mass of Chinook (`Losee Chiook data`), which I exported as `~/data/wdfw_data.csv`
 
 ```{r import_data}
 ## set data dir
 datadir <- here::here("data")
-## import raw data
-raw_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
+## import raw Tengu data
+tengu_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
+## import raw WDFW data
+wdfw_data <- readr::read_csv(file.path(datadir, "wdfw_data.csv"))
 ```
 
 ## Fishing effort
 
-This dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.
+The Tengu Derby dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.
 
 ```{r calculate_cpue, fig.dim = c(6, 4)}
 ## CPUE
-cpue <- raw_data$total_catch / (raw_data$days * raw_data$members)
+cpue <- tengu_data$total_catch / (tengu_data$days * tengu_data$members)
 
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(raw_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "blue",
         las = 1, log = "y",
         ylab = "CPUE", xlab = "Year", yaxt = "n")
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
@@ -136,11 +138,11 @@ The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.
 ```{r plot_cpue_rw_resids, fig.dim = c(6, 4)}
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(raw_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "blue",
         las = 1, log = "y",
         ylab = "CPUE", xlab = "Year", yaxt = "n")
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
-lines(ts(t(exp(cpue_brw$states)), start = min(raw_data$year)))
+lines(ts(t(exp(cpue_brw$states)), start = min(tengu_data$year)))
 ```
 
 \setlength{\leftskip}{0.5in}
@@ -172,14 +174,14 @@ Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how th
 
 ```{r size_corr}
 ## total mass of 5 largest fish
-sum_of_top_5 <- apply(raw_data[,c(9:13)], 1, sum, na.rm = TRUE)
+sum_of_top_5 <- apply(tengu_data[,c(9:13)], 1, sum, na.rm = TRUE)
 sum_of_top_5[sum_of_top_5 == 0] <- NA
 
 ## 3 size metrics
-fish_sizes <- cbind("N over 10 lbs" = raw_data$n_over_10,
-                    "N over 5 lbs" = raw_data$n_over_5,
+fish_sizes <- cbind("N over 10 lbs" = tengu_data$n_over_10,
+                    "N over 5 lbs" = tengu_data$n_over_5,
                     "Sum of top 5 (kg)" = sum_of_top_5) %>%
-  ts(start = min(raw_data$year))
+  ts(start = min(tengu_data$year))
 
 ## correlation among the 3 metrics
 cor(fish_sizes, use = "pairwise.complete.obs") %>%
@@ -260,8 +262,96 @@ The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.
 ```{r plot_size_rw, fig.dim = c(6, 4)}
 ## time series plot of size & model fit
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(sum_of_top_5, start = min(raw_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(sum_of_top_5, start = min(tengu_data$year)), lwd = 2, col = "blue",
         las = 1, ylab = "Sum of top 5 (kg)", xlab = "Year")
-lines(ts(t(exp(size_rw$states)), start = min(raw_data$year)))
+lines(ts(t(exp(size_rw$states)), start = min(tengu_data$year)))
 ```
+
+# Comparisons between the Tengu Derby & WDFW
+
+Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in abundance and size over time. Here I investigate whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
+
+\begin{gather}
+\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t \\
+\mathbf{x}_t = \mathbf{x}_{t-1} + \mathbf{w}_t
+\end{gather}
+
+For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For the model with only one state of nature, $\mathbf{Z}$ is a $[2 \times 1]$ vector of 1's, $\mathbf{x}_t$ is a $[1 \times 1]$ scalar of the true state, and $\mathbf{w}_t \sim \text{N}(0, q)$, such that
+
+\begin{gather}
+\begin{bmatrix}
+y_\text{Tengu} \\
+y_\text{WDFW}
+\end{bmatrix}_t
+ = 
+\begin{bmatrix}
+1 \\
+1
+\end{bmatrix}
+x_t + 
+\begin{bmatrix}
+a_\text{Tengu} \\
+a_\text{WDFW}
+\end{bmatrix}
++ 
+\begin{bmatrix}
+v_\text{Tengu} \\
+v_\text{WDFW}
+\end{bmatrix}_t
+\\
+x_t = x_{t-1} + w_t
+\end{gather}
+
+For the model with two different states of nature, $\mathbf{Z}$ is a $[2 \times 2]$ identity matrix, $\mathbf{x}_t$ is a $[2 \times 1]$ vector of the true states, and $\mathbf{w}_t \sim \text{MVN}(\mathbf{0}, \mathbf{Q})$, such that
+
+\begin{gather}
+\begin{bmatrix}
+y_\text{Tengu} \\
+y_\text{WDFW}
+\end{bmatrix}_t
+ = 
+\begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+x_\text{Tengu} \\
+x_\text{WDFW}
+\end{bmatrix}_t
++ 
+\begin{bmatrix}
+a_\text{Tengu} \\
+a_\text{WDFW}
+\end{bmatrix}
++ 
+\begin{bmatrix}
+v_\text{Tengu} \\
+v_\text{WDFW}
+\end{bmatrix}_t
+\\
+\begin{bmatrix}
+x_\text{Tengu} \\
+x_\text{WDFW}
+\end{bmatrix}_t
+= 
+\begin{bmatrix}
+x_\text{Tengu} \\
+x_\text{WDFW}
+\end{bmatrix}_{t-1}
++ 
+\begin{bmatrix}
+w_\text{Tengu} \\
+w_\text{WDFW}
+\end{bmatrix}_t
+\end{gather}
+
+
+## Changes in abundance over time
+
+
+
+
+## Changes in size over time
+
+
 
