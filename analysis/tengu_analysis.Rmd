@@ -47,13 +47,16 @@ wdfw_data <- readr::read_csv(file.path(datadir, "wdfw_data.csv"))
 
 The Tengu Derby dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.
 
-```{r calculate_cpue, fig.dim = c(6, 4)}
+```{r calculate_cpue}
 ## CPUE
 cpue <- tengu_data$total_catch / (tengu_data$days * tengu_data$members)
+```
 
+
+```{r plot_cpue, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
         las = 1, log = "y",
         ylab = "CPUE", xlab = "Year", yaxt = "n")
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
@@ -135,10 +138,10 @@ The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.
 
 ## Model fit to CPUE
 
-```{r plot_cpue_rw_fit, fig.dim = c(6, 4)}
+```{r plot_cpue_rw_fit, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
         las = 1, log = "y",
         ylab = "CPUE", xlab = "Year", yaxt = "n")
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
@@ -194,10 +197,10 @@ As suspected, all three metrics are correlated, with the total number of fish ov
 
 Here are plots of the three size metrics over time.
 
-```{r ts_plot_sizes, fig.dim = c(6, 8)}
+```{r ts_plot_sizes, fig.dim = c(6, 8), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(fish_sizes, lwd = 2, col = "blue",
+plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
         main = "", yax.flip = TRUE,
         ylab = c("", "", ""), xlab = "Year")
 ```
@@ -259,13 +262,27 @@ The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.
 
 ## Model fit to size data
 
-```{r plot_size_rw, fig.dim = c(6, 4)}
+```{r plot_size_rw, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of size & model fit
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(mean_of_top_5, start = min(tengu_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(mean_of_top_5, start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
         las = 1, ylab = "Mean of top 5 (kg)", xlab = "Year")
 lines(ts(t(exp(size_rw$states)), start = min(tengu_data$year)))
 ```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(4, caption = "Time series of observed CPUE (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
 
 # Comparisons between the Tengu Derby & WDFW
 
@@ -318,8 +335,8 @@ x_t = x_{t-1} + w_t
 
 ```{r ssm_one}
 ## select common data
-yy <- cbind(mean_of_top_5[tengu_data$year >= 1970 & tengu_data$year <= 2015],
-            wdfw_data$size[wdfw_data$year >= 1970])
+yy <- cbind(tengu = mean_of_top_5[tengu_data$year >= 1970 & tengu_data$year <= 2014],
+            wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
 
 ## model defn for Eqns 6 & 7
 mod_list <- list(
@@ -334,6 +351,29 @@ mod_list <- list(
 ## fit Eqns 6 & 7
 size_both_1 <- MARSS(t(log(yy)), model = mod_list)
 ```
+
+```{r plot_ssm_one, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_1$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(5, caption = "Time series of observed fish size from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 6 & 7; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
 
 
 ## Two patterns over time
@@ -396,13 +436,30 @@ mod_list <- list(
 size_both_2 <- MARSS(t(log(yy)), model = mod_list)
 ```
 
+```{r plot_ssm_two, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(6, caption = "Time series of observed fish size from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
 \vspace{0.25in}
 
 ## Summary of size comparison
 
 The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather modest support for two unique temporal patterns in the data.
-
-```{r plot_ssm_two}
-
-```
 
