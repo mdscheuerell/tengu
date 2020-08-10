@@ -124,13 +124,13 @@ The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.
 
 The time series of CPUE (Figure 1) appears to exhibit increasing variance over time, so here is a plot of the residuals from the better fitting random walk model (Eqn 2).
 
-```{r plot_RW_resids, fig.dim = c(6, 4)}
+```{r plot_cpue_rw_resids, fig.dim = c(6, 4)}
 ## Model residuals
-rw_resids <- t(residuals(cpue_rw)$state.residuals)
+cpue_rw_resids <- t(residuals(cpue_rw)$state.residuals)
 
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
+plot.ts(ts(cpue_rw_resids, start = min(raw_data$year)), lwd = 2, col = "blue",
         las = 1, ylab = "Model residuals", xlab = "Year")
 ```
 
@@ -247,4 +247,14 @@ size_rw <- MARSS(l_size, model = mod_list)
 \vspace{0.25in}
 
 The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 2)`), and the model with a bias term has an AIC value ~`r round(diff(AIC(size_rw, size_brw)$AIC), 1)` units greater than the model without a bias term, suggesting there is no data support for a systematic downward trend in the log-transformed size over time.
+
+### Model fit to size data
+
+```{r plot_size_rw, fig.dim = c(6, 4)}
+## time series plot of size & model fit
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(t(l_size), start = min(raw_data$year)), lwd = 2, col = "blue",
+        las = 1, ylab = "Sum of top 5 (kg)", xlab = "Year")
+lines(ts(t(size_brw$states), start = min(raw_data$year)))
+```
 
