@@ -173,7 +173,7 @@ The data set contains three different indicators of fish size over time:
 
 3) the masses (kg) of the 5 largest fish.
 
-Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how they relate to (3), I summed the sizes of the 5 largest fish and compare that metric to (1) and (2). Here are the correlations among the three.
+Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how they relate to (3), I averaged the sizes of the 5 largest fish and compare that metric to (1) and (2). Here are the correlations among the three.
 
 ```{r size_corr}
 ## total mass of 5 largest fish
@@ -181,9 +181,9 @@ mean_of_top_5 <- apply(tengu_data[,c(9:13)], 1, mean, na.rm = TRUE)
 mean_of_top_5[is.nan(mean_of_top_5)] <- NA
 
 ## 3 size metrics
-fish_sizes <- cbind("Number over 10 lbs" = tengu_data$n_over_10,
-                    "Number over 5 lbs" = tengu_data$n_over_5,
-                    "Mean mass of top 5 (kg)" = mean_of_top_5) %>%
+fish_sizes <- cbind("N over 10 lbs" = tengu_data$n_over_10,
+                    "N over 5 lbs" = tengu_data$n_over_5,
+                    "Mean of top 5 (kg)" = mean_of_top_5) %>%
   ts(start = min(tengu_data$year))
 
 ## correlation among the 3 metrics
@@ -224,9 +224,13 @@ There appears to be an overall decline in fish size from the mid 1940s until the
 
 ## Fit biased random walk
 
-Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here I use the log-transformed sum of the five largest fish (ie, `log(mean_of_top_5)`).
+Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here, however, I used the log-transformed sum of the two largest fish, instead of the top five, because fewer than five fish were recorded in some of the later years.
 
 ```{r model_setup_2}
+## total mass of 5 largest fish
+sum_of_top_2 <- apply(tengu_data[,c(9:10)], 1, mean, na.rm = TRUE)
+sum_of_top_2[is.nan(sum_of_top_2)] <- NA
+
 ## model setup
 mod_list <- list(
   B = matrix(1),
@@ -237,7 +241,7 @@ mod_list <- list(
   R = matrix("r")
 )
 ## response
-l_size <- matrix(log(mean_of_top_5), nrow = 1)
+l_size <- matrix(log(sum_of_top_2), nrow = 1)
 ```
 
 ```{r biased_RW_size}
@@ -286,7 +290,7 @@ lines(ts(t(exp(size_rw$states)), start = min(tengu_data$year)))
 
 # Comparisons between the Tengu Derby & WDFW
 
-Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in size over time. I investigated whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
+Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in size and CPUE over time. I investigated whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
 
 \begin{gather}
 \mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t \\
@@ -303,9 +307,11 @@ r_1 & 0 \\
 \end{bmatrix}
 $$
 
+## Fish size
+
 The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
 
-## One pattern over time
+### One pattern over time
 
 For the model with only one state of nature, $\mathbf{Z}$ is a $[2 \times 1]$ vector of 1's, $\mathbf{x}_t$ is a $[1 \times 1]$ scalar of the true state, and $\mathbf{w}_t \sim \text{N}(0, q)$, such that
 
@@ -333,9 +339,9 @@ v_\text{WDFW}
 x_t = x_{t-1} + w_t
 \end{gather}
 
-```{r ssm_one}
+```{r ssm_one_size}
 ## select common data
-yy <- cbind(tengu = mean_of_top_5[tengu_data$year >= 1970 & tengu_data$year <= 2014],
+yy <- cbind(tengu = sum_of_top_2[tengu_data$year >= 1970 & tengu_data$year <= 2014],
             wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
 
 ## model defn for Eqns 6 & 7
@@ -352,12 +358,11 @@ mod_list <- list(
 size_both_1 <- MARSS(t(log(yy)), model = mod_list)
 ```
 
-```{r plot_ssm_one, fig.dim = c(6, 4), echo = FALSE}
+```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE}
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_1$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"),
-        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_1$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
 
@@ -376,7 +381,7 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 \vspace{0.25in}
 
 
-## Two patterns over time
+### Two patterns over time
 
 For the model with two different states of nature, $\mathbf{Z}$ is a $[2 \times 2]$ identity matrix, $\mathbf{x}_t$ is a $[2 \times 1]$ vector of the true states, and $\mathbf{w}_t \sim \text{MVN}(\mathbf{0}, \mathbf{Q})$, such that
 
@@ -421,7 +426,7 @@ w_\text{WDFW}
 \end{bmatrix}_t
 \end{gather}
 
-```{r ssm_two}
+```{r ssm_two_size}
 ## model defn for Eqns 8 & 9
 mod_list <- list(
   B = diag(2),
@@ -436,12 +441,11 @@ mod_list <- list(
 size_both_2 <- MARSS(t(log(yy)), model = mod_list)
 ```
 
-```{r plot_ssm_two, fig.dim = c(6, 4), echo = FALSE}
+```{r plot_ssm_two_size, fig.dim = c(6, 4), echo = FALSE}
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"),
-        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
 
@@ -459,7 +463,105 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 \vspace{0.25in}
 
-## Summary of size comparison
+### Summary of size comparison
 
 The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather modest support for two unique temporal patterns in the data.
+
+## CPUE
+
+The time series of CPUE from WDFW begins in 1968 and runs through 2015, but the Tengy Derby data is missing catch information for 2015, so I restricted my analysis to the 47 years from 1968-2014. Because the units for the catch data differ for the two datasets and vary by several orders of magnitude, I log-transformed each of the time series and then normalized them to have mean zero and unit variance.
+
+### One pattern over time
+
+Here is the model for one common temporal trend, analogous to Equations 6 & 7 above.
+
+```{r ssm_one_cpue}
+## select common data
+yy <- cbind(tengu = cpue[tengu_data$year >= 1968 & tengu_data$year <= 2015],
+            wdfw = wdfw_data$total[wdfw_data$year >= 1968 & wdfw_data$year <= 2015])
+## standardize the mean and variance
+yy <- scale(log(yy))
+
+## model defn for Eqns 6 & 7
+mod_list <- list(
+  B = matrix(1),
+  U = matrix(0),
+  Q = matrix("q"),
+  Z = matrix(1, nrow = 2, ncol = 1),
+  A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit Eqns 6 & 7
+cpue_both_1 <- MARSS(t(yy), model = mod_list)
+```
+
+```{r plot_ssm_one_cpue, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+matlines(t(cpue_both_1$states), type = "l", lty = "dashed", lwd = 1, col = c("black"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(7, caption = "Time series of observed CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 6 & 7; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+
+### Two patterns over time
+
+
+```{r ssm_two_cpue}
+## model defn for Eqns 8 & 9
+mod_list <- list(
+  B = diag(2),
+  U = matrix(0, nrow = 2, ncol = 1),
+  Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  Z = diag(2),
+  A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit Eqns 8 & 9
+cpue_both_2 <- MARSS(t(yy), model = mod_list)
+```
+
+```{r plot_ssm_two_cpue, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+matlines(t(cpue_both_2$states), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(8, caption = "Time series of observed fish CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+### Summary of CPUE comparison
+
+The model with one common state has an AICc value of `r round(cpue_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(cpue_both_2$AICc, 1)`, which provides reasonable support for two unique temporal patterns in the data.
+
+
 
