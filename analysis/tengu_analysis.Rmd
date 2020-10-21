@@ -110,7 +110,7 @@ mod_list <- list(
   R = matrix("r")
 )
 
-## response
+## log the response
 l_cpue <- matrix(log(cpue), nrow = 1)
 ```
 
@@ -173,31 +173,28 @@ The data set contains three different indicators of fish size over time:
 
 3) the masses (kg) of the 5 largest fish.
 
-Clearly (1) and (2) will be correlated, as (1) is a subset of (2). To see how they relate to (3), I averaged the sizes of the 5 largest fish and compare that metric to (1) and (2). Here are the correlations among the three.
+Clearly (1) and (2) will be correlated, as (1) is a subset of (2). Furthermore, the probability of catching a fish greater than 5 or 10 pounds clearly increases as the total number of fish caught also increases. Thus, I modeled the proportion of fish caught in a given year that were greater than the 2 size thresholds.
 
-```{r size_corr}
-## total mass of 5 largest fish
-mean_of_top_5 <- apply(tengu_data[,c(9:13)], 1, mean, na.rm = TRUE)
-mean_of_top_5[is.nan(mean_of_top_5)] <- NA
+```{r prop_of_fish}
+## proportion of fish >10 lbs
+p10 <- tengu_data$n_over_10 / tengu_data$total_catch
+## screen for p = 0 & change to p = 0.001
+p10[p10 == 0] <- 0.001
 
-## 3 size metrics
-fish_sizes <- cbind("N over 10 lbs" = tengu_data$n_over_10,
-                    "N over 5 lbs" = tengu_data$n_over_5,
-                    "Mean of top 5 (kg)" = mean_of_top_5) %>%
+## proportion of fish >5 lbs
+p5 <- tengu_data$n_over_5 / tengu_data$total_catch
+## screen for p = 1 & change to p = 0.999
+p5[p5 == 1] <- 0.999
+
+## combine proportional data
+fish_sizes <- cbind("Prop. over 10 lbs" = p10, "Prop. over 5 lbs" = p5) %>%
   ts(start = min(tengu_data$year))
-
-## correlation among the 3 metrics
-cor(fish_sizes, use = "pairwise.complete.obs") %>%
-  round(2)
 ```
 
-\vspace{0.25in}
-
-As suspected, all three metrics are correlated, with the total number of fish over 10 pounds and the total mass (kg) of the five largest fish being particularly so.
 
 Here are plots of the three size metrics over time.
 
-```{r ts_plot_sizes, fig.dim = c(6, 8), echo = FALSE}
+```{r ts_plot_sizes, fig.dim = c(6, 6), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
@@ -210,7 +207,7 @@ plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
 
 \small
 
-`r fig_cap(3, caption = "Time series of fish size over time, including the total number of fish over 10 pounds (top), the total number of fish over 5 pounds (middle), and the total mass (kg) of the five largest fish (bottom).", display = "full")` 
+`r fig_cap(3, caption = "Time series of the proportion of fish over 10 pounds (top) and over 5 pounds (bottom).", display = "full")` 
 
 \normalsize
 
@@ -221,15 +218,16 @@ plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
 
 There appears to be an overall decline in fish size from the mid 1940s until the early 1980s, when fish sizes increased rapidly before declining again until present.
 
-
 ## Fit biased random walk
 
-Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data. Here, however, I used the log-transformed sum of the two largest fish, instead of the top five, because fewer than five fish were recorded in some of the later years.
+Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data, with the response being the logit-transformed proportions of fish over 10 and 5 pounds.
 
 ```{r model_setup_2}
-## total mass of 5 largest fish
-sum_of_top_2 <- apply(tengu_data[,c(9:10)], 1, mean, na.rm = TRUE)
-sum_of_top_2[is.nan(sum_of_top_2)] <- NA
+## response for fish >10 lbs
+l_size_10 <- matrix(qlogis(p10), nrow = 1)
+
+## response for fish >5 lbs
+l_size_5 <- matrix(qlogis(p5), nrow = 1)
 
 ## model setup
 mod_list <- list(
@@ -240,38 +238,54 @@ mod_list <- list(
   A = matrix(0),
   R = matrix("r")
 )
-## response
-l_size <- matrix(log(sum_of_top_2), nrow = 1)
 ```
 
 ```{r biased_RW_size}
+## over 10
 ## fit model with bias (Eqn 1)
-size_brw <- MARSS(l_size, model = mod_list)
+size_brw_10 <- MARSS(l_size_10, model = mod_list)
 
 ## 95% CI for bias
-size_brw <- MARSSparamCIs(size_brw)
+size_brw_10 <- MARSSparamCIs(size_brw_10)
+
+
+## over 5
+## fit model with bias (Eqn 1)
+size_brw_5 <- MARSS(l_size_5, model = mod_list)
+
+## 95% CI for bias
+size_brw_5 <- MARSSparamCIs(size_brw_5)
 ```
 
 ## Fit unbiased random walk
 
 ```{r unbiased_RW_size}
-## fit model without bias (Eqn 2)
+## set bias to 0
 mod_list$U <- matrix(0)
-size_rw <- MARSS(l_size, model = mod_list)
+
+## over 10
+## fit model without bias (Eqn 2)
+size_rw_10 <- MARSS(l_size_10, model = mod_list)
+
+## over 5
+## fit model without bias (Eqn 2)
+size_rw_5 <- MARSS(l_size_5, model = mod_list)
 ```
 
 \vspace{0.25in}
 
-The 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw$par.lowCI$U, size_brw$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw$AICc - size_brw$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
+For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
+
+For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw_5$AICc - size_brw_5$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
 
 ## Model fit to size data
 
-```{r plot_size_rw, fig.dim = c(6, 4), echo = FALSE}
+```{r plot_size_10_rw, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of size & model fit
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(mean_of_top_5, start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
-        las = 1, ylab = "Mean of top 5 (kg)", xlab = "Year")
-lines(ts(t(exp(size_rw$states)), start = min(tengu_data$year)))
+plot.ts(ts(t(plogis(l_size_10)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
+        las = 1, ylab = "Prop. over 10 kg", xlab = "Year")
+lines(ts(t(plogis(size_rw_10$states)), start = min(tengu_data$year)))
 ```
 
 \setlength{\leftskip}{0.5in}
@@ -279,7 +293,29 @@ lines(ts(t(exp(size_rw$states)), start = min(tengu_data$year)))
 
 \small
 
-`r fig_cap(4, caption = "Time series of observed CPUE (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
+`r fig_cap(4, caption = "Time series of observed size (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+```{r plot_size_5_rw, fig.dim = c(6, 4), echo = FALSE}
+## time series plot of size & model fit
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(t(plogis(l_size_5)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
+        las = 1, ylab = "Prop. over 10 kg", xlab = "Year")
+lines(ts(t(plogis(size_rw_5$states)), start = min(tengu_data$year)))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(5, caption = "Time series of observed size (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
 
 \normalsize
 
@@ -340,6 +376,10 @@ x_t = x_{t-1} + w_t
 \end{gather}
 
 ```{r ssm_one_size}
+## total mass of 5 largest fish
+sum_of_top_2 <- apply(tengu_data[,c(9:10)], 1, mean, na.rm = TRUE)
+sum_of_top_2[is.nan(sum_of_top_2)] <- NA
+
 ## select common data
 yy <- cbind(tengu = sum_of_top_2[tengu_data$year >= 1970 & tengu_data$year <= 2014],
             wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
