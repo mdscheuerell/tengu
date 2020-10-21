@@ -21,7 +21,12 @@ a, a > code {
 .frimg img {
   background: transparent;
   padding: 7px;
-  border: 1px solid #636363;
+  border: 0 solid #636363;
+}
+.frimgB img {
+  background: transparent;
+  padding: 7px;
+  border: 2px solid #636363;
 }
 .black-border {
   background: transparent;
@@ -31,12 +36,24 @@ a, a > code {
 .bb {
   border: 5px solid #000000;
 }
+/* text size */
+.huge { font-size: 150% }
 .large { font-size: 125% }
 .small { font-size: 75% }
-.blue-text { color: #488fdf }
-.orange-text { color: #ff8100 }
-.red-text { color: #c10101 }
+.tiny { font-size: 50% }
+/* text color */
+.white-text {
+  color: #ffffff;
+  text-shadow: 2px 2px 6px #000000;
+}
+.wh-text { color: #ffffff }
 .gray-text { color: #656565 }
+.red-text { color: #c10101 }
+.orange-text { color: #ff8100 }
+.green-text{ color: #339933 }
+.blue-text { color: #488fdf }
+.purple-text{ color: #844870 }
+/* text formatting */
 .under { text-decoration: underline; }
 .footnote {
   position: absolute;
@@ -44,17 +61,40 @@ a, a > code {
   padding-right: 4em;
   font-size: 90%;
 }
+.footnoteSm {
+  position: absolute;
+  bottom: 2em;
+  padding-right: 4em;
+  font-size: 70%;
+}
+.botleft {
+  position: fixed;
+  bottom: 2em;
+  left: 2em;
+  font-size: 90%;
+}
+.topleft {
+  position: fixed;
+  top: 3em;
+  left: 2em;
+}
 .futnote {
   position: fixed;
   bottom: 2em;
-  left: 5em;
+  left: 4em;
   font-size: 90%;
 }
 .citation {
   position: fixed;
   bottom: 2em;
-  right: 5em;
+  right: 4em;
   font-size: 90%;
+}
+.citationT {
+  position: fixed;
+  bottom: 1em;
+  right: 2em;
+  font-size: 80%;
 }
 .remark-code, .remark-inline-code { font-family: 'Source Code Pro', 'Lucida Console', Monaco, monospace; }
 .remark-code-line-highlighted     { background-color: #ffff88; }
@@ -79,6 +119,9 @@ a, a > code {
   background-color: #004080;
   color: #ffffff;
   text-shadow: 0 0 20px #333;
+}
+.black-back {
+  background-color: #000000;
 }
 .title-slide h1 {
   color: #F7F8FA;
@@ -123,6 +166,12 @@ a, a > code {
 .pull-right ~ * {
   clear: both;
 }
+.img-center-land {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 60%;
+}
 .img-left-land {
   float: left;
   width: 60%;
@@ -164,4 +213,35 @@ th, td { padding: 5px; }
     top: 0 !important;
     left: 0 !important;
   }
+  .white-text {
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* yanone-kaffeesatz-regular - latin */
+@font-face {
+  font-family: 'Yanone Kaffeesatz';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/yanone-kaffeesatz-v9-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Yanone Kaffeesatz Regular'), local('YanoneKaffeesatz-Regular'),
+       url('../fonts/yanone-kaffeesatz-v9-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/yanone-kaffeesatz-v9-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/yanone-kaffeesatz-v9-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/yanone-kaffeesatz-v9-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/yanone-kaffeesatz-v9-latin-regular.svg#YanoneKaffeesatz') format('svg'); /* Legacy iOS */
+}
+
+/* source-code-pro-regular - latin */
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/source-code-pro-v7-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Source Code Pro'), local('SourceCodePro-Regular'),
+       url('../fonts/source-code-pro-v7-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/source-code-pro-v7-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/source-code-pro-v7-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/source-code-pro-v7-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/source-code-pro-v7-latin-regular.svg#SourceCodePro') format('svg'); /* Legacy iOS */
 }

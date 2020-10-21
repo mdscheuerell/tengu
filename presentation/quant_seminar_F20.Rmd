@@ -1,0 +1,176 @@
+---
+output:
+  xaringan::moon_reader:
+    css: "my-theme.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+---
+
+```{r setup, include=FALSE, message=FALSE}
+options(htmltools.dir.version = FALSE, servr.daemon = TRUE)
+library(huxtable)
+```
+
+
+class: center, middle
+
+# Size and abundance of resident salmon in the Salish Sea: Insights from a culturally unique recreational fishery
+
+## Mark Scheuerell
+
+USGS Washington Cooperative Fish and Wildlife Research Unit<br>School of Aquatic and Fishery Sciences<br>University of Washington<br>Seattle, WA
+
+.futnote.purple-text[scheuerl@uw.edu]
+
+.citation.blue-text[@mark_scheuerell]
+
+---
+
+# Questions
+
+.blue-text[
+## Has size or catch rate changed over the decades?
+
+## Do any changes mirror patterns in size or abundance of Puget Sound Chinook salmon as a whole?
+]
+
+---
+
+class: center, middle, inverse
+
+# Temporal trends in derby harvest
+
+---
+
+# Catch per unit effort
+
+## We have the following info:
+
+---
+
+# Time series of CPUE
+
+---
+
+# Model forms
+
+## Random walk
+
+---
+
+# Model fitting
+
+## MARSS
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+## Figure
+
+---
+
+class: center, middle, inverse
+
+# Temporal trends in derby size
+
+---
+
+# 3 metrics of size
+
+.blue-text[
+## 1) The weight of each of the top five Chinook salmon
+
+## 2) The number over 10 pounds
+
+## 3) The number over 5 pounds 
+]
+
+---
+
+# Three metrics of fish size
+
+.gray-text[
+## 1) The weight of each of the top five Chinook salmon
+]
+
+.blue-text[
+## 2) The number over 10 pounds
+
+## 3) The number over 5 pounds 
+]
+
+---
+
+# Proportions of large fish
+
+---
+
+# Time series of proportions
+
+---
+
+# Model forms
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+---
+
+class: middle, center, inverse
+
+# Comparisons of derby and survey data
+
+---
+
+# WDFW surveys
+
+## Losee et al (2019)
+
+---
+
+# Time series of CPUE
+
+---
+
+# Model forms
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+---
+
+# Time series of size
+
+---
+
+# Model forms
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+---
+
+# Conclusions
+
