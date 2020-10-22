@@ -49,14 +49,14 @@ The Tengu Derby dataset lacks the necessary detail to calculate a proper index o
 
 ```{r calculate_cpue}
 ## CPUE
-cpue <- tengu_data$total_catch / (tengu_data$days * tengu_data$members)
+cpue <- (tengu_data$total_catch / (tengu_data$days * tengu_data$members))[-c(1:5)]
 ```
 
 
 ```{r plot_cpue, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
+plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
         las = 1, log = "y",
         ylab = "CPUE", xlab = "Year", yaxt = "n")
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
@@ -117,7 +117,7 @@ l_cpue <- matrix(log(cpue), nrow = 1)
 ## Fit biased random walk
 
 ```{r biased_RW_CPUE, cache = TRUE}
-## fit model with bias (Eqn 2)
+## fit biased RW (Eqn 2)
 cpue_brw <- MARSS(l_cpue, model = mod_list)
 
 ## 95% CI for bias
@@ -127,7 +127,7 @@ cpue_brw <- MARSSparamCIs(cpue_brw)
 ## Fit unbiased random walk
 
 ```{r unbiased_RW_CPUE, cache = TRUE}
-## fit model without bias (Eqn 3)
+## fit unbiased RW (Eqn 3)
 mod_list$U <- matrix(0)
 cpue_rw <- MARSS(l_cpue, model = mod_list)
 ```
@@ -141,11 +141,11 @@ The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.
 ```{r plot_cpue_rw_fit, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of CPUE
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(cpue, start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
+plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
         las = 1, log = "y",
         ylab = "CPUE", xlab = "Year", yaxt = "n")
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
-lines(ts(t(exp(cpue_brw$states)), start = min(tengu_data$year)))
+lines(ts(t(exp(cpue_brw$states)), start = 1950))
 ```
 
 \setlength{\leftskip}{0.5in}
