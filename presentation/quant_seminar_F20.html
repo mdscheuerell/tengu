@@ -44,33 +44,104 @@ class: center, middle, inverse
 
 # Catch per unit effort
 
-## We have the following info:
+.blue-text[
+## Things we know:
+
+* ### Total number of days the derby was open
+
+* ### Total number of participants
+
+* ### Total number of fish caught
+]
+
+---
+
+# Catch per unit effort
+
+.blue-text[
+## Things we know:
+
+* ### Total number of days the derby was open
+
+* ### Total number of participants
+
+* ### Total number of fish caught
+]
+
+.red-text[
+## Things we don't know:
+
+* ### Total number of days that *each* angler fished
+]
+
+---
+
+# Catch per unit effort
+
+.blue-text[
+## Thus, we assumed that each angler fished every day the derby was open
+]
+
+$$
+\Large{
+\text{CPUE} = \frac{\text{fish caught}}{\text{days} \times \text{anglers}}
+}
+$$
 
 ---
 
 # Time series of CPUE
 
+&lt;img src="quant_seminar_F20_files/figure-html/plot_cpue-1.png" style="display: block; margin: auto;" /&gt;
+
+
 ---
 
-# Model forms
+# Possible state models
 
 ## Random walk
+
+`\(\Large{x_t = x_{t-1} + w_t}\)`
+
+
+
+---
+
+# Possible state models
+
+## Random walk
+
+`\(\Large{x_t = x_{t-1} + w_t}\)`
+
+## Biased random walk
+
+`\(\Large{x_t = x_{t-1} + u + w_t}\)`
+
+
+---
+
+# Observation model
+
+### Imperfect accounting of effort means we are unsure of the true CPUE
+
+`\(\Large{y_t = x_t + v_t}\)`
+
 
 ---
 
 # Model fitting
 
-## MARSS
+### MARSS package for R (Holmes, Ward &amp; Scheuerell 2020)
+
+https://CRAN.R-project.org/package=MARSS
 
 ---
 
-# Data support
+# CPUE has decreased by ~2% per year
 
----
 
-# Model fit to data
 
-## Figure
+&lt;img src="quant_seminar_F20_files/figure-html/plot_cpue_fit-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
@@ -92,7 +163,7 @@ class: center, middle, inverse
 
 ---
 
-# 3 metrics of size
+# Three metrics of fish size
 
 .gray-text[
 ## 1) The weight of each of the top five Chinook salmon
@@ -103,6 +174,74 @@ class: center, middle, inverse
 
 ## 3) The number over 5 pounds 
 ]
+
+---
+
+# Proportions of large fish
+
+---
+
+# Time series of proportions
+
+---
+
+# Model forms
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+---
+
+class: middle, center, inverse
+
+# Comparisons of derby and survey data
+
+---
+
+# WDFW surveys
+
+## Losee et al (2019)
+
+---
+
+# Time series of CPUE
+
+---
+
+# Model forms
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+---
+
+# Time series of size
+
+---
+
+# Model forms
+
+---
+
+# Data support
+
+---
+
+# Model fit to data
+
+---
+
+# Conclusions
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({

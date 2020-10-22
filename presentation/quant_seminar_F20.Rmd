@@ -11,6 +11,8 @@ output:
 ```{r setup, include=FALSE, message=FALSE}
 options(htmltools.dir.version = FALSE, servr.daemon = TRUE)
 library(huxtable)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center")
+library(MARSS)
 ```
 
 
@@ -46,33 +48,147 @@ class: center, middle, inverse
 
 # Catch per unit effort
 
-## We have the following info:
+.blue-text[
+## Things we know:
+
+* ### Total number of days the derby was open
+
+* ### Total number of participants
+
+* ### Total number of fish caught
+]
+
+---
+
+# Catch per unit effort
+
+.blue-text[
+## Things we know:
+
+* ### Total number of days the derby was open
+
+* ### Total number of participants
+
+* ### Total number of fish caught
+]
+
+.red-text[
+## Things we don't know:
+
+* ### Total number of days that *each* angler fished
+]
+
+---
+
+# Catch per unit effort
+
+.blue-text[
+## Thus, we assumed that each angler fished every day the derby was open
+]
+
+$$
+\Large{
+\text{CPUE} = \frac{\text{fish caught}}{\text{days} \times \text{anglers}}
+}
+$$
 
 ---
 
 # Time series of CPUE
 
+```{r plot_cpue, fig.dim=c(9, 6)}
+## set data dir
+datadir <- here::here("data")
+## import raw Tengu data
+tengu_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
+## import raw WDFW data
+wdfw_data <- readr::read_csv(file.path(datadir, "wdfw_data.csv"))
+
+## CPUE
+cpue <- (tengu_data$total_catch / (tengu_data$days * tengu_data$members))[-c(1:5)]
+
+## time series plot of CPUE
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
+        las = 1, log = "y", # xlim = c(1950,2020),
+        ylab = "", xlab = "Year", yaxt = "n")
+mtext("CPUE", side = 2, line = 3.5, cex = 1.6)
+axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
+```
+
+
 ---
 
-# Model forms
+# Possible state models
 
 ## Random walk
+
+$\Large{x_t = x_{t-1} + w_t}$
+
+
+
+---
+
+# Possible state models
+
+## Random walk
+
+$\Large{x_t = x_{t-1} + w_t}$
+
+## Biased random walk
+
+$\Large{x_t = x_{t-1} + u + w_t}$
+
+
+---
+
+# Observation model
+
+### Imperfect accounting of effort means we are unsure of the true CPUE
+
+$\Large{y_t = x_t + v_t}$
+
 
 ---
 
 # Model fitting
 
-## MARSS
+### MARSS package for R (Holmes, Ward & Scheuerell 2020)
+
+https://CRAN.R-project.org/package=MARSS
 
 ---
 
-# Data support
+# CPUE has decreased by ~2% per year
 
----
+```{r fit_cpue, cache = TRUE, results = 'hide'}
+## model setup
+mod_list <- list(
+  B = matrix(1),
+  U = matrix("u"),
+  Q = matrix("q"),
+  Z = matrix(1),
+  A = matrix(0),
+  R = matrix("r")
+)
 
-# Model fit to data
+## log the response
+l_cpue <- matrix(log(cpue), nrow = 1)
 
-## Figure
+## fit biased RW
+cpue_brw <- MARSS(l_cpue, model = mod_list)
+```
+
+```{r plot_cpue_fit, fig.dim=c(9, 6)}
+## time series plot of CPUE
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
+        las = 1, log = "y", xlim = c(1950,2020),
+        ylab = "", xlab = "Year", yaxt = "n")
+mtext("CPUE", side = 2, line = 3.5, cex = 1.6)
+axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
+lines(ts(t(exp(cpue_brw$states)), start = 1950))
+```
 
 ---
 
