@@ -113,7 +113,7 @@ par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
         las = 1, log = "y", # xlim = c(1950,2020),
         ylab = "", xlab = "Year", yaxt = "n")
-mtext("CPUE", side = 2, line = 3.5, cex = 1.6)
+mtext("CPUE", side = 2, line = 3.5, cex = 1.8)
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
 ```
 
@@ -185,14 +185,20 @@ cpue_brw <- MARSS(l_cpue, model = mod_list)
 ```
 
 ```{r plot_cpue_fit, fig.dim=c(9, 6)}
+se <- sqrt(coef(cpue_brw)$R)
+
 ## time series plot of CPUE
 par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
         las = 1, log = "y", xlim = c(1950,2020),
         ylab = "", xlab = "Year", yaxt = "n")
-mtext("CPUE", side = 2, line = 3.5, cex = 1.6)
+mtext("CPUE", side = 2, line = 3.5, cex = 1.8)
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
-lines(ts(t(exp(cpue_brw$states)), start = 1950))
+lines(ts(t(exp(cpue_brw$states)), start = 1950), lwd = 1)
+lines(ts(exp(c(cpue_brw$states) + 2*se), start = 1950),
+      col = "darkgray")
+lines(ts(exp(c(cpue_brw$states) - 2*se), start = 1950),
+      col = "darkgray")
 ```
 
 ---
@@ -247,7 +253,7 @@ par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(size_10, lwd = 2, col = "dodgerblue",
         main = "", las = 1,
         ylab = c("", "", ""), xlab = "Year")
-mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+mtext("Proportion", side = 2, line = 3.5, cex = 1.8)
 ```
 
 ---
@@ -267,7 +273,7 @@ par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(size_5, lwd = 2, col = "dodgerblue",
         main = "", las = 1,
         ylab = c("", "", ""), xlab = "Year")
-mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+mtext("Proportion", side = 2, line = 3.5, cex = 1.8)
 ```
 
 ---
@@ -344,8 +350,12 @@ par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(size_10, lwd = 2, col = "dodgerblue",
         main = "", las = 1,
         ylab = c("", "", ""), xlab = "Year")
-mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+mtext("Proportion", side = 2, line = 3.5, cex = 1.8)
 lines(ts(t(plogis(size_rw_10$states)), start = 1950), lwd = 2)
+lines(ts(t(plogis(size_rw_10$states + 2*size_rw_10$states.se)), start = 1950),
+      col = "darkgray", lwd = 1)
+lines(ts(t(plogis(size_rw_10$states - 2*size_rw_10$states.se)), start = 1950),
+      col = "darkgray", lwd = 1)
 ```
 
 ---
@@ -358,8 +368,12 @@ par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(size_5, lwd = 2, col = "dodgerblue",
         main = "", las = 1,
         ylab = c("", "", ""), xlab = "Year")
-mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+mtext("Proportion", side = 2, line = 3.5, cex = 1.8)
 lines(ts(t(plogis(size_rw_5$states)), start = 1950), lwd = 2)
+lines(ts(t(plogis(size_rw_5$states + 2*size_rw_10$states.se)), start = 1950),
+      col = "darkgray", lwd = 1)
+lines(ts(t(plogis(size_rw_5$states - 2*size_rw_10$states.se)), start = 1950),
+      col = "darkgray", lwd = 1)
 ```
 
 ---
