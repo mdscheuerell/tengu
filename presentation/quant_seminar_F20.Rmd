@@ -13,6 +13,7 @@ options(htmltools.dir.version = FALSE, servr.daemon = TRUE)
 library(huxtable)
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center")
 library(MARSS)
+library(dplyr)
 ```
 
 
@@ -125,7 +126,9 @@ axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
 
 $\Large{x_t = x_{t-1} + w_t}$
 
+<br>
 
+where $x_t$ is the log(CPUE) at time $t$
 
 ---
 
@@ -144,7 +147,9 @@ $\Large{x_t = x_{t-1} + u + w_t}$
 
 # Observation model
 
+.red-text[
 ### Imperfect accounting of effort means we are unsure of the true CPUE
+]
 
 $\Large{y_t = x_t + v_t}$
 
@@ -198,15 +203,17 @@ class: center, middle, inverse
 
 ---
 
-# 3 metrics of size
+# Three metrics of fish size
 
 .blue-text[
-## 1) The weight of each of the top five Chinook salmon
+## 1) The weight of each of the top five Chinook salmon*
 
 ## 2) The number over 10 pounds
 
 ## 3) The number over 5 pounds 
 ]
+
+.citation[*In _most_ years]
 
 ---
 
@@ -224,23 +231,136 @@ class: center, middle, inverse
 
 ---
 
-# Proportions of large fish
+# Proportion of fish over 10 pounds
+
+```{r plot_prop_over_10, fig.dim=c(9, 6)}
+## proportion of fish >10 lbs
+p10 <- (tengu_data$n_over_10 / tengu_data$total_catch)[-c(1:5)]
+## screen for p = 0 & change to p = 0.001
+p10[p10 == 0] <- 0.001
+
+## ts of sizes
+size_10 <- ts(p10, start = 1950)
+
+## time series plot of fish size metrics
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+plot.ts(size_10, lwd = 2, col = "dodgerblue",
+        main = "", las = 1,
+        ylab = c("", "", ""), xlab = "Year")
+mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+```
 
 ---
 
-# Time series of proportions
+# Proportion of fish over 5 pounds
+
+```{r plot_prop_over_5, fig.dim=c(9, 6)}
+## proportion of fish >5 lbs
+p5 <- (tengu_data$n_over_5 / tengu_data$total_catch)[-c(1:5)]
+## screen for p = 1 & change to p = 0.999
+p5[p5 == 1] <- 0.999
+## ts of sizes
+size_5 <- ts(p5, start = 1950)
+
+## time series plot of fish size metrics
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+plot.ts(size_5, lwd = 2, col = "dodgerblue",
+        main = "", las = 1,
+        ylab = c("", "", ""), xlab = "Year")
+mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+```
 
 ---
 
-# Model forms
+# Possible state models
+
+## Random walk
+
+$\Large{x_t = x_{t-1} + w_t}$
+
+## Biased random walk
+
+$\Large{x_t = x_{t-1} + u + w_t}$
+
+<br>
+
+where $x_t = \text{logit}(p_t)$ 
 
 ---
 
-# Data support
+# Observation model
+
+.red-text[
+### Imperfect sampling means we are unsure of the true size
+]
+
+$\Large{y_t = x_t + v_t}$
+
 
 ---
 
-# Model fit to data
+```{r fit_tengu_sizes, cache = TRUE, results = "hide"}
+## response for fish >10 lbs 
+l_size_10 <- matrix(qlogis(p10), nrow = 1)
+
+## response for fish >5 lbs
+l_size_5 <- matrix(qlogis(p5), nrow = 1)
+
+## model setup
+mod_list <- list(
+  B = matrix(1),
+  U = matrix("u"),
+  Q = matrix("q"),
+  Z = matrix(1),
+  A = matrix(0),
+  R = matrix("r")
+)
+
+## over 10
+## fit model with bias (Eqn 1)
+size_brw_10 <- MARSS(l_size_10, model = mod_list)
+
+## over 5
+## fit model with bias (Eqn 1)
+size_brw_5 <- MARSS(l_size_5, model = mod_list)
+
+## set bias to 0
+mod_list$U <- matrix(0)
+
+## over 10
+## fit model without bias (Eqn 2)
+size_rw_10 <- MARSS(l_size_10, model = mod_list)
+
+## over 5
+## fit model without bias (Eqn 2)
+size_rw_5 <- MARSS(l_size_5, model = mod_list)
+```
+
+# Proportion of fish over 10 pounds
+
+```{r plot_prop_over_10_fit, fig.dim=c(9, 6)}
+## time series plot of fish size metrics
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+plot.ts(size_10, lwd = 2, col = "dodgerblue",
+        main = "", las = 1,
+        ylab = c("", "", ""), xlab = "Year")
+mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+lines(ts(t(plogis(size_rw_10$states)), start = 1950), lwd = 2)
+```
+
+---
+
+# Proportion of fish over 5 pounds
+
+```{r plot_prop_over_5_fit, fig.dim=c(9, 6)}
+## time series plot of fish size metrics
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+plot.ts(size_5, lwd = 2, col = "dodgerblue",
+        main = "", las = 1,
+        ylab = c("", "", ""), xlab = "Year")
+mtext("Proportion", side = 2, line = 3.5, cex = 1.6)
+lines(ts(t(plogis(size_rw_5$states)), start = 1950), lwd = 2)
+```
 
 ---
 

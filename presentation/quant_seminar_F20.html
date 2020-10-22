@@ -103,7 +103,9 @@ $$
 
 `\(\Large{x_t = x_{t-1} + w_t}\)`
 
+&lt;br&gt;
 
+where `\(x_t\)` is the log(CPUE) at time `\(t\)`
 
 ---
 
@@ -122,7 +124,9 @@ $$
 
 # Observation model
 
+.red-text[
 ### Imperfect accounting of effort means we are unsure of the true CPUE
+]
 
 `\(\Large{y_t = x_t + v_t}\)`
 
@@ -151,15 +155,17 @@ class: center, middle, inverse
 
 ---
 
-# 3 metrics of size
+# Three metrics of fish size
 
 .blue-text[
-## 1) The weight of each of the top five Chinook salmon
+## 1) The weight of each of the top five Chinook salmon*
 
 ## 2) The number over 10 pounds
 
 ## 3) The number over 5 pounds 
 ]
+
+.citation[*In _most_ years]
 
 ---
 
@@ -177,23 +183,56 @@ class: center, middle, inverse
 
 ---
 
-# Proportions of large fish
+# Proportion of fish over 10 pounds
+
+&lt;img src="quant_seminar_F20_files/figure-html/plot_prop_over_10-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
-# Time series of proportions
+# Proportion of fish over 5 pounds
+
+&lt;img src="quant_seminar_F20_files/figure-html/plot_prop_over_5-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
-# Model forms
+# Possible state models
+
+## Random walk
+
+`\(\Large{x_t = x_{t-1} + w_t}\)`
+
+## Biased random walk
+
+`\(\Large{x_t = x_{t-1} + u + w_t}\)`
+
+&lt;br&gt;
+
+where `\(x_t = \text{logit}(p_t)\)` 
 
 ---
 
-# Data support
+# Observation model
+
+.red-text[
+### Imperfect sampling means we are unsure of the true size
+]
+
+`\(\Large{y_t = x_t + v_t}\)`
+
 
 ---
 
-# Model fit to data
+
+
+# Proportion of fish over 10 pounds
+
+&lt;img src="quant_seminar_F20_files/figure-html/plot_prop_over_10_fit-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Proportion of fish over 5 pounds
+
+&lt;img src="quant_seminar_F20_files/figure-html/plot_prop_over_5_fit-1.png" style="display: block; margin: auto;" /&gt;
 
 ---
 
