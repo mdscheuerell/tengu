@@ -343,108 +343,6 @@ r_1 & 0 \\
 \end{bmatrix}
 $$
 
-## CPUE
-
-The time series of CPUE from WDFW begins in 1968 and runs through 2015, but the Tengy Derby data is missing catch information for 2015, so I restricted my analysis to the 47 years from 1968-2014. Because the units for the catch data differ for the two datasets and vary by several orders of magnitude, I log-transformed each of the time series and then normalized them to have mean zero and unit variance.
-
-### One pattern over time
-
-Here is the model for one common temporal trend, analogous to Equations 6 & 7 above.
-
-```{r ssm_one_cpue, cache = TRUE}
-## select common data
-cpue_t <- seq(1950, 2019)
-wdfw_t <- seq(1968, 2015)
-yy <- cbind(tengu = cpue[cpue_t %in% wdfw_t],
-            wdfw = wdfw_data$total)
-
-## standardize the mean and variance
-yy <- scale(log(yy))
-
-## model defn for Eqns 6 & 7
-mod_list <- list(
-  B = matrix(1),
-  U = matrix(0),
-  Q = matrix("q"),
-  Z = matrix(1, nrow = 2, ncol = 1),
-  A = matrix(list(0, "W"), nrow = 2, ncol = 1),
-  R = matrix(list("r", 0, 0, "r"), 2, 2)
-)
-
-## fit Eqns 6 & 7
-cpue_both_1 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
-```
-
-```{r plot_ssm_one_cpue, fig.dim = c(6, 4), echo = FALSE}
-par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
-        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
-matlines(t(cpue_both_1$states), type = "l", lty = "dashed", lwd = 1, col = c("black"))
-axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
-```
-
-\setlength{\leftskip}{0.5in}
-\setlength{\rightskip}{0.5in}
-
-\small
-
-`r fig_cap(7, caption = "Time series of observed CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 6 & 7; dashed).", display = "full")` 
-
-\normalsize
-
-\setlength{\leftskip}{0in}
-\setlength{\rightskip}{0in}
-
-\vspace{0.25in}
-
-
-### Two patterns over time
-
-
-```{r ssm_two_cpue}
-## model defn for Eqns 8 & 9
-mod_list <- list(
-  B = diag(2),
-  # U = matrix(c("tengu", "wdfw"), nrow = 2, ncol = 1),
-  U = matrix(c("bias", "bias"), nrow = 2, ncol = 1),
-  # Q = matrix(list("T", 0, 0, "W"), 2, 2),
-  Q = matrix(list("q", 0, 0, "q"), 2, 2),
-  Z = diag(2),
-  A = matrix(list(0, "W"), nrow = 2, ncol = 1),
-  # R = matrix(list("T", 0, 0, "W"), 2, 2)
-  R = matrix(list("r", 0, 0, "r"), 2, 2)
-)
-
-## fit Eqns 8 & 9
-cpue_both_2 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
-```
-
-```{r plot_ssm_two_cpue, fig.dim = c(6, 4), echo = FALSE}
-par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
-        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
-matlines(t(cpue_both_2$states), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
-axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
-```
-
-\setlength{\leftskip}{0.5in}
-\setlength{\rightskip}{0.5in}
-
-\small
-
-`r fig_cap(8, caption = "Time series of observed fish CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
-
-\normalsize
-
-\setlength{\leftskip}{0in}
-\setlength{\rightskip}{0in}
-
-\vspace{0.25in}
-
-### Summary of CPUE comparison
-
-The model with one common state has an AICc value of `r round(cpue_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(cpue_both_2$AICc, 1)`, which provides reasonable support for two unique temporal patterns in the data.
-
 ## Fish size
 
 The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
@@ -572,10 +470,10 @@ w_\text{WDFW}
 ## model defn for Eqns 8 & 9
 mod_list <- list(
   B = diag(2),
-  U = matrix(0, nrow = 2, ncol = 1),
+  U = matrix("u", nrow = 2, ncol = 1),
   Q = matrix(list("T", 0, 0, "W"), 2, 2),
   Z = diag(2),
-  A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  A = matrix(c(0, 0), nrow = 2, ncol = 1),
   R = matrix(list("T", 0, 0, "W"), 2, 2)
 )
 
@@ -608,6 +506,108 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ### Summary of size comparison
 
 The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather modest support for two unique temporal patterns in the data.
+
+## CPUE
+
+The time series of CPUE from WDFW begins in 1968 and runs through 2015, but the Tengy Derby data is missing catch information for 2015, so I restricted my analysis to the 47 years from 1968-2014. Because the units for the catch data differ for the two datasets and vary by several orders of magnitude, I log-transformed each of the time series and then normalized them to have mean zero and unit variance.
+
+### One pattern over time
+
+Here is the model for one common temporal trend, analogous to Equations 6 & 7 above.
+
+```{r ssm_one_cpue, cache = TRUE}
+## select common data
+cpue_t <- seq(1950, 2019)
+wdfw_t <- seq(1968, 2015)
+yy <- cbind(tengu = cpue[cpue_t %in% wdfw_t],
+            wdfw = wdfw_data$total)
+
+## standardize the mean and variance
+yy <- scale(log(yy))
+
+## model defn for Eqns 6 & 7
+mod_list <- list(
+  B = matrix(1),
+  U = matrix(0),
+  Q = matrix("q"),
+  Z = matrix(1, nrow = 2, ncol = 1),
+  A = matrix(list(0, "W"), nrow = 2, ncol = 1),
+  R = matrix(list("r", 0, 0, "r"), 2, 2)
+)
+
+## fit Eqns 6 & 7
+cpue_both_1 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
+```
+
+```{r plot_ssm_one_cpue, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+matlines(t(cpue_both_1$states), type = "l", lty = "dashed", lwd = 1, col = c("black"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(7, caption = "Time series of observed CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 6 & 7; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+
+### Two patterns over time
+
+
+```{r ssm_two_cpue}
+## model defn for Eqns 8 & 9
+mod_list <- list(
+  B = diag(2),
+  # U = matrix(c("tengu", "wdfw"), nrow = 2, ncol = 1),
+  U = matrix(c("bias", "bias"), nrow = 2, ncol = 1),
+  # Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  Q = matrix(list("q", 0, 0, "q"), 2, 2),
+  Z = diag(2),
+  A = matrix(list(0, "W"), nrow = 2, ncol = 1),
+  # R = matrix(list("T", 0, 0, "W"), 2, 2)
+  R = matrix(list("r", 0, 0, "r"), 2, 2)
+)
+
+## fit Eqns 8 & 9
+cpue_both_2 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
+```
+
+```{r plot_ssm_two_cpue, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+matlines(t(cpue_both_2$states), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(8, caption = "Time series of observed fish CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+### Summary of CPUE comparison
+
+The model with one common state has an AICc value of `r round(cpue_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(cpue_both_2$AICc, 1)`, which provides reasonable support for two unique temporal patterns in the data.
 
 
 
