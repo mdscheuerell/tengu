@@ -164,6 +164,15 @@ $\Large{y_t = x_t + v_t}$
 
 ---
 
+# Full state-space model
+
+$\Large{x_t = x_{t-1} + u + w_t}$
+
+$\Large{y_t = x_t + v_t}$
+
+
+---
+
 # Model fitting
 
 ### MARSS package for R (Holmes, Ward & Scheuerell 2020)
