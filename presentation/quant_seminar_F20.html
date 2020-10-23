@@ -250,13 +250,34 @@ class: middle, center, inverse
 
 ---
 
-# Model forms
-
----
-
 # Time series of both catch indices
 
 &lt;img src="quant_seminar_F20_files/figure-html/plot_wdfw_cpue-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Model forms
+
+`$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
+x_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\
+v_\text{WDFW} \end{bmatrix}_t$$`
+
+`$$x_t = x_{t-1} + w_t$$`
+
+---
+
+# Model forms
+
+`$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 &amp; 0 \\ 0 &amp; 1 \end{bmatrix}
+\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\ v_\text{WDFW} \end{bmatrix}_t$$`
+
+`$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$`
+
+---
+
+class: middle, center
+
+# The data support two unique states
 
 ---
 

@@ -400,14 +400,10 @@ par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 plot.ts(ts(wdfw_data$total/1000, start = 1968), lwd = 2, col = "indianred",
         main = "", las = 1,
         ylab = c("", "", ""), xlab = "Year")
-mtext("Total catch (1000s)", side = 2, line = 3.5, cex = 1.8)
+mtext("Abundance (1000s)", side = 2, line = 3.5, cex = 1.8)
 ```
 
 .citation.gray-text[Losee et al (2019) _Fish & Fisheries_]
-
----
-
-# Model forms
 
 ---
 
@@ -416,11 +412,36 @@ mtext("Total catch (1000s)", side = 2, line = 3.5, cex = 1.8)
 ```{r plot_wdfw_cpue, fig.dim = c(9, 6)}
 par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"), las = 1,
-        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+        ylab = "Standardized abundance", xlab = "Year", xaxt = "n")
 text(6, 1.4, "Tengu", pos = 3, cex = 1.5, col = "dodgerblue")
 text(6, -1.7, "WDFW", pos = 1, cex = 1.5, col = "indianred")
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
+
+---
+
+# Model forms
+
+$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
+x_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\
+v_\text{WDFW} \end{bmatrix}_t$$
+
+$$x_t = x_{t-1} + w_t$$
+
+---
+
+# Model forms
+
+$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
+\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\ v_\text{WDFW} \end{bmatrix}_t$$
+
+$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$
+
+---
+
+class: middle, center
+
+# The data support two unique states
 
 ---
 
@@ -448,7 +469,7 @@ cpue_both_2 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
 ```{r plot_ssm_two_cpue, fig.dim = c(9, 6), echo = FALSE}
 par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
 matplot(yy, type = "l", lty = "solid", lwd = 1, col = c("dodgerblue", "indianred"), las = 1,
-        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+        ylab = "Standardized abundance", xlab = "Year", xaxt = "n")
 text(6, 1.4, "Tengu", pos = 3, cex = 1.5, col = "dodgerblue")
 text(6, -1.7, "WDFW", pos = 1, cex = 1.5, col = "indianred")
 matlines(t(cpue_both_2$states), type = "l", lty = "dashed", lwd = 2, col = c("dodgerblue", "indianred"))
