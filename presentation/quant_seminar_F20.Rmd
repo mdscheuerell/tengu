@@ -25,9 +25,9 @@ class: center, middle
 
 USGS Washington Cooperative Fish and Wildlife Research Unit<br>School of Aquatic and Fishery Sciences<br>University of Washington<br>Seattle, WA
 
-.futnote.purple-text[scheuerl@uw.edu]
+.futnote.purple-text[`r icon::fa("envelope")` scheuerl@uw.edu]
 
-.citation.blue-text[@mark_scheuerell]
+.citation.blue-text[`r icon::fa("twitter")` @mark_scheuerell]
 
 ---
 
@@ -195,9 +195,9 @@ plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
 mtext("CPUE", side = 2, line = 3.5, cex = 1.8)
 axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
 lines(ts(t(exp(cpue_brw$states)), start = 1950), lwd = 1)
-lines(ts(exp(c(cpue_brw$states) + 2*se), start = 1950),
+lines(ts(exp(as.vector(cpue_brw$states) + 2*se), start = 1950),
       col = "darkgray")
-lines(ts(exp(c(cpue_brw$states) - 2*se), start = 1950),
+lines(ts(exp(as.vector(cpue_brw$states) - 2*se), start = 1950),
       col = "darkgray")
 ```
 
@@ -380,11 +380,11 @@ lines(ts(t(plogis(size_rw_5$states - 2*size_rw_10$states.se)), start = 1950),
 
 class: middle, center, inverse
 
-# Comparisons of derby and survey data
+# Comparison of derby & survey catch data
 
 ---
 
-# WDFW surveys
+# WDFW survey data
 
 ```{r both_cpue, fig.dim = c(9, 6)}
 ## select common data
@@ -422,26 +422,34 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 # Model forms
 
+.blue-text[
+## One common state
+]
+
 $$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
 x_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\
 v_\text{WDFW} \end{bmatrix}_t$$
 
-$$x_t = x_{t-1} + w_t$$
+$$x_t = x_{t-1} + u + w_t$$
 
 ---
 
 # Model forms
 
+.blue-text[
+## Two unique states
+]
+
 $$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
 \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\ v_\text{WDFW} \end{bmatrix}_t$$
 
-$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$
+$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} u_\text{Tengu} \\ u_\text{WDFW} \end{bmatrix} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$
 
 ---
 
 class: middle, center
 
-# The data support two unique states
+# The data support .green-text[two unique states] with a .green-text[common decline] of ~2.5% per year
 
 ---
 
@@ -456,7 +464,6 @@ mod_list <- list(
   # Q = matrix(list("T", 0, 0, "W"), 2, 2),
   Q = matrix(list("q", 0, 0, "q"), 2, 2),
   Z = diag(2),
-  # A = matrix(list("T", "W"), nrow = 2, ncol = 1),
   A = matrix(list(0, 0), nrow = 2, ncol = 1),
   # R = matrix(list("T", 0, 0, "W"), 2, 2)
   R = matrix(list("r", 0, 0, "r"), 2, 2)
@@ -479,21 +486,126 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 ---
 
+class: middle, center, inverse
+
+# Comparison of derby & survey size data
+
+---
+
+# Three metrics of fish size
+
+.blue-text[
+## 1) The weight of each of the top five Chinook salmon*
+
+## 2) The number over 10 pounds
+
+## 3) The number over 5 pounds 
+]
+
+.citation[*In _most_ years]
+
+---
+
+# Three metrics of fish size
+
+.blue-text[
+## 1) The mean weight of the _top two_ Chinook salmon
+]
+
+.gray-text[
+## 2) The number over 10 pounds
+
+## 3) The number over 5 pounds 
+]
+
+---
+
 # Time series of size
+
+```{r plot_both_sizes, fig.dim = c(9, 6), echo = FALSE}
+## total mass of 5 largest fish
+mean_of_top_2 <- apply(tengu_data[,c(9:10)], 1, mean, na.rm = TRUE)
+mean_of_top_2[is.nan(mean_of_top_2)] <- NA
+
+## select common data
+yy <- cbind(tengu = mean_of_top_2[tengu_data$year >= 1970 & tengu_data$year <= 2014],
+            wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
+
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+text(17, 4, "Tengu", pos = 1, cex = 1.5, col = "dodgerblue")
+text(17, 8.2, "WDFW", pos = 3, cex = 1.5, col = "indianred")
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+```{r ssm_two_size, cache = TRUE, results = "hide"}
+## model defn
+mod_list <- list(
+  B = diag(2),
+  U = matrix("u", nrow = 2, ncol = 1),
+  Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  Z = diag(2),
+  A = matrix(c(0, 0), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit model
+size_both_2 <- MARSS(t(log(yy)), model = mod_list)
+```
+
 
 ---
 
 # Model forms
 
+.blue-text[
+## One common state
+]
+
+$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
+x_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\
+v_\text{WDFW} \end{bmatrix}_t$$
+
+$$x_t = x_{t-1} + u + w_t$$
+
+.blue-text[
+## Two unique states
+]
+
+$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}
+\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\ v_\text{WDFW} \end{bmatrix}_t$$
+
+$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} u_\text{Tengu} \\ u_\text{WDFW} \end{bmatrix} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$
+
 ---
 
-# Data support
+class: middle, center
+
+# The data support .green-text[two unique states] with a .green-text[common decline] of ~0.4% per year
 
 ---
 
 # Model fit to data
 
+```{r plot_ssm_one_size, fig.dim = c(9, 6), echo = FALSE}
+par(mai = c(0.9, 1.1, 0.1, 0.1), cex.axis = 1.5, cex.lab = 1.8)
+matplot(yy, type = "l", lty = "solid", lwd = 1, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 2, col = c("dodgerblue", "indianred"))
+text(17, 4, "Tengu", pos = 1, cex = 1.5, col = "dodgerblue")
+text(17, 8.2, "WDFW", pos = 3, cex = 1.5, col = "indianred")
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
 ---
 
 # Conclusions
 
+.blue-text[
+## Tengu anglers and WDFW surveys seem to be sampling different groups of fish
+
+## Both data sources showed evidence for declining abundance and size over time
+
+## The Tengu data are an amazing source of information
+]

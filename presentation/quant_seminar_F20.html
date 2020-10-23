@@ -3,6 +3,7 @@
   <head>
     <title>quant_seminar_F20.utf8</title>
     <meta charset="utf-8">
+    <link href="libs/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="my-theme.css" type="text/css" />
   </head>
   <body>
@@ -20,9 +21,9 @@ class: center, middle
 
 USGS Washington Cooperative Fish and Wildlife Research Unit&lt;br&gt;School of Aquatic and Fishery Sciences&lt;br&gt;University of Washington&lt;br&gt;Seattle, WA
 
-.futnote.purple-text[scheuerl@uw.edu]
+.futnote.purple-text[<i class="fa  fa-envelope "></i> scheuerl@uw.edu]
 
-.citation.blue-text[@mark_scheuerell]
+.citation.blue-text[<i class="fa  fa-twitter "></i> @mark_scheuerell]
 
 ---
 
@@ -238,11 +239,11 @@ where `\(x_t = \text{logit}(p_t)\)`
 
 class: middle, center, inverse
 
-# Comparisons of derby and survey data
+# Comparison of derby &amp; survey catch data
 
 ---
 
-# WDFW surveys
+# WDFW survey data
 
 &lt;img src="quant_seminar_F20_files/figure-html/both_cpue-1.png" style="display: block; margin: auto;" /&gt;
 
@@ -258,26 +259,34 @@ class: middle, center, inverse
 
 # Model forms
 
+.blue-text[
+## One common state
+]
+
 `$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
 x_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\
 v_\text{WDFW} \end{bmatrix}_t$$`
 
-`$$x_t = x_{t-1} + w_t$$`
+`$$x_t = x_{t-1} + u + w_t$$`
 
 ---
 
 # Model forms
 
+.blue-text[
+## Two unique states
+]
+
 `$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 &amp; 0 \\ 0 &amp; 1 \end{bmatrix}
 \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\ v_\text{WDFW} \end{bmatrix}_t$$`
 
-`$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$`
+`$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} u_\text{Tengu} \\ u_\text{WDFW} \end{bmatrix} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$`
 
 ---
 
 class: middle, center
 
-# The data support two unique states
+# The data support .green-text[two unique states] with a .green-text[common decline] of ~2.5% per year
 
 ---
 
@@ -290,23 +299,93 @@ class: middle, center
 
 ---
 
+class: middle, center, inverse
+
+# Comparison of derby &amp; survey size data
+
+---
+
+# Three metrics of fish size
+
+.blue-text[
+## 1) The weight of each of the top five Chinook salmon*
+
+## 2) The number over 10 pounds
+
+## 3) The number over 5 pounds 
+]
+
+.citation[*In _most_ years]
+
+---
+
+# Three metrics of fish size
+
+.blue-text[
+## 1) The mean weight of the _top two_ Chinook salmon
+]
+
+.gray-text[
+## 2) The number over 10 pounds
+
+## 3) The number over 5 pounds 
+]
+
+---
+
 # Time series of size
+
+&lt;img src="quant_seminar_F20_files/figure-html/plot_both_sizes-1.png" style="display: block; margin: auto;" /&gt;
+
+
+
 
 ---
 
 # Model forms
 
+.blue-text[
+## One common state
+]
+
+`$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 \\ 1 \end{bmatrix}
+x_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\
+v_\text{WDFW} \end{bmatrix}_t$$`
+
+`$$x_t = x_{t-1} + u + w_t$$`
+
+.blue-text[
+## Two unique states
+]
+
+`$$\begin{bmatrix} y_\text{Tengu} \\ y_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} 1 &amp; 0 \\ 0 &amp; 1 \end{bmatrix}
+\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t + \begin{bmatrix} a_\text{Tengu} \\ a_\text{WDFW} \end{bmatrix} + \begin{bmatrix} v_\text{Tengu} \\ v_\text{WDFW} \end{bmatrix}_t$$`
+
+`$$\begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_t = \begin{bmatrix} x_\text{Tengu} \\ x_\text{WDFW} \end{bmatrix}_{t-1} + \begin{bmatrix} u_\text{Tengu} \\ u_\text{WDFW} \end{bmatrix} + \begin{bmatrix} w_\text{Tengu} \\ w_\text{WDFW} \end{bmatrix}_t$$`
+
 ---
 
-# Data support
+class: middle, center
+
+# The data support .green-text[two unique states] with a .green-text[common decline] of ~0.4% per year
 
 ---
 
 # Model fit to data
 
+&lt;img src="quant_seminar_F20_files/figure-html/plot_ssm_one_size-1.png" style="display: block; margin: auto;" /&gt;
+
 ---
 
 # Conclusions
+
+.blue-text[
+## Tengu anglers and WDFW surveys seem to be sampling different groups of fish
+
+## Both data sources showed evidence for declining abundance and size over time
+
+## The Tengu data are an amazing source of information
+]
     </textarea>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
