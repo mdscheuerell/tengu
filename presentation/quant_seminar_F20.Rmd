@@ -19,7 +19,7 @@ library(dplyr)
 
 class: center, middle
 
-# Size and abundance of resident salmon in the Salish Sea: Insights from a culturally unique recreational fishery
+# Size and abundance of resident Chinook salmon in the Salish Sea: Insights from a culturally unique recreational fishery
 
 ## Mark Scheuerell
 
@@ -397,11 +397,11 @@ lines(ts(t(plogis(size_rw_5$states - 2*size_rw_10$states.se)), start = 1950),
 
 class: middle, center, inverse
 
-# Comparison of derby & survey catch data
+# Comparison of derby & WDFW catch data
 
 ---
 
-# WDFW survey data
+# WDFW abundance estimates
 
 ```{r both_cpue, fig.dim = c(8, 5)}
 ## select common data
@@ -424,7 +424,7 @@ mtext("Abundance (1000s)", side = 2, line = 3.5, cex = 1.8)
 
 ---
 
-# Time series of both catch indices
+# Time series of both abundance indices
 
 ```{r plot_wdfw_cpue, fig.dim = c(8, 5)}
 par(mai = c(1.1, 1.3, 0.3, 0.3), cex.axis = 1.3, cex.lab = 1.6)
@@ -505,7 +505,7 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 class: middle, center, inverse
 
-# Comparison of derby & survey size data
+# Comparison of derby & WDFW size data
 
 ---
 
@@ -620,7 +620,7 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 # Conclusions
 
 .green-text[
-## Tengu anglers and WDFW surveys seem to be sampling different groups of fish
+## Tengu anglers and WDFW assessments seem to be sampling different groups of fish
 
 ## Both data sources showed evidence for declining abundance and size over time
 
