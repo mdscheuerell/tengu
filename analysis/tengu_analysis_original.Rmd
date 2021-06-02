@@ -1,0 +1,613 @@
+---
+title: "Shifts in the size of fish from a culturally important recreational fishery"
+author: "Mark Scheuerell"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  pdf_document:
+    highlight: haddock
+fontsize: 11pt
+geometry: margin=1in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+
+library(dplyr)
+library(MARSS)
+
+## plot hook to increase margins
+local({
+  hook_old <- knitr::knit_hooks$get("plot")  # save the old hook
+  knitr::knit_hooks$set(plot = function(x, options) {
+    x <- c("\\vspace{0.5in}", hook_old(x, options))
+  })
+})
+
+## better captions
+library("captioner")
+## set default caption delimter
+fig_cap <- captioner(suffix = ".", style = "b", style_prefix = TRUE)
+```
+
+
+# Data
+
+The original Tengu Derby data were provided to me by Tom Quinn on 16 June 2020 in the form of an MS Excel file titled `Tengu_derby_leaders through 2019 derby.xls`. I exported one worksheet of interest (`data in kg`) as `~/data/tengu_derby_data.csv`. The same Excel file also included a worksheet with information from WDFW on the number of natural- and hatchery-origin Chinook, and the mean mass of Chinook (`Losee Chiook data`), which I exported as `~/data/wdfw_data.csv`
+
+```{r import_data}
+## set data dir
+datadir <- here::here("data")
+## import raw Tengu data
+tengu_data <- readr::read_csv(file.path(datadir, "tengu_derby_data.csv"))
+## import raw WDFW data
+wdfw_data <- readr::read_csv(file.path(datadir, "wdfw_data.csv"))
+```
+
+## Fishing effort
+
+The Tengu Derby dataset lacks the necessary detail to calculate a proper index of the catch per unit effort (CPUE) because effort is ill-defined. That is, although we know the total number of days per year the derby was open and the total number of anglers that participated per year, we don't know how many days *each* angler fished. Therefore, we assumed that each angler fished every day the derby was open, which is almost certainly an overestimate of the true effort, but we have no reason to believe there would be any systematic change over time.
+
+```{r calculate_cpue}
+## CPUE
+cpue <- (tengu_data$total_catch / (tengu_data$days * tengu_data$members))[-c(1:5)]
+```
+
+
+```{r plot_cpue, fig.dim = c(6, 4), echo = FALSE}
+## time series plot of CPUE
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
+        las = 1, log = "y",
+        ylab = "CPUE", xlab = "Year", yaxt = "n")
+axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(1, caption = "Time series of catch per unit effort of blackmouth from the Tengu Derby. Note that the y-axis is on a natural log scale.", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+
+# Changes in catch over time
+
+We can model CPUE data with a state-space model, such that the observed CPUE are treated as an index of the general abundance of blackmouth within this region of Puget Sound. Because the CPUE appears to generally decline over time, I fit two different state models:
+
+1) a normal random walk; and 
+
+2) a biased random walk.
+
+Because CPUE is necessarily bounded by zero at a minimum, I fit models to the log-transformed CPUE. Specifically, the models are defined as
+
+\begin{equation}
+c_t = x_t + v_t
+\end{equation}
+
+and
+
+\begin{gather}
+x_t = x_{t-1} + u + w_t \\
+\text{or} \nonumber \\
+x_t = x_{t-1} + w_t
+\end{gather}
+
+where $c_t$ is the log$_e$-transformed CPUE, $x_t$ is the true, but unobserved abundance of blackmouth, $u$ is a bias term, and $v_t \sim \text{N}(0, \sigma_y)$ and $w_t \sim \text{N}(0, \sigma_c)$.
+
+```{r model_setup}
+## model setup
+mod_list <- list(
+  B = matrix(1),
+  U = matrix("u"),
+  Q = matrix("q"),
+  Z = matrix(1),
+  A = matrix(0),
+  R = matrix("r")
+)
+
+## log the response
+l_cpue <- matrix(log(cpue), nrow = 1)
+```
+
+## Fit biased random walk
+
+```{r biased_RW_CPUE, cache = TRUE}
+## fit biased RW (Eqn 2)
+cpue_brw <- MARSS(l_cpue, model = mod_list)
+
+## 95% CI for bias
+cpue_brw <- MARSSparamCIs(cpue_brw)
+```
+
+## Fit unbiased random walk
+
+```{r unbiased_RW_CPUE, cache = TRUE}
+## fit unbiased RW (Eqn 3)
+mod_list$U <- matrix(0)
+cpue_rw <- MARSS(l_cpue, model = mod_list)
+```
+
+\vspace{0.25in}
+
+The 95% confidence interval for the bias term $(u)$ is (`r round(c(cpue_brw$par.lowCI$U, cpue_brw$par.upCI$U), 2)`), and the model with a bias term has an AICc value ~`r round(cpue_rw$AICc - cpue_brw$AICc, 1)` units lower than the model without a bias term, suggesting there is indeed some data support for a systematic downward trend in the log-transformed CPUE over time.
+
+## Model fit to CPUE
+
+```{r plot_cpue_rw_fit, fig.dim = c(6, 4), echo = FALSE}
+## time series plot of CPUE
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(cpue, start = 1950), lwd = 2, col = "dodgerblue",
+        las = 1, log = "y",
+        ylab = "CPUE", xlab = "Year", yaxt = "n")
+axis(2, at = c(0.01, 0.02, 0.05, 0.1), las = 1)
+lines(ts(t(exp(cpue_brw$states)), start = 1950))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(2, caption = "Time series of observed CPUE (blue) and the fit for the biased random walk model (Eqn 2; black).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+
+# Changes in fish size over time
+
+The data set contains three different indicators of fish size over time:
+
+1) the total number of fish over 10 pounds (~4.55 kg);
+
+2) the total number of fish over 5 pounds (~2.27 kg); and
+
+3) the masses (kg) of the 5 largest fish.
+
+Clearly (1) and (2) will be correlated, as (1) is a subset of (2). Furthermore, the probability of catching a fish greater than 5 or 10 pounds clearly increases as the total number of fish caught also increases. Thus, I modeled the proportion of fish caught in a given year that were greater than the 2 size thresholds.
+
+```{r prop_of_fish}
+## proportion of fish >10 lbs
+p10 <- tengu_data$n_over_10 / tengu_data$total_catch
+## screen for p = 0 & change to p = 0.001
+p10[p10 == 0] <- 0.001
+
+## proportion of fish >5 lbs
+p5 <- tengu_data$n_over_5 / tengu_data$total_catch
+## screen for p = 1 & change to p = 0.999
+p5[p5 == 1] <- 0.999
+
+## combine proportional data
+fish_sizes <- cbind("Prop. over 10 lbs" = p10, "Prop. over 5 lbs" = p5) %>%
+  ts(start = min(tengu_data$year))
+```
+
+
+Here are plots of the three size metrics over time.
+
+```{r ts_plot_sizes, fig.dim = c(6, 6), echo = FALSE}
+## time series plot of fish size metrics
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
+        main = "", yax.flip = TRUE,
+        ylab = c("", "", ""), xlab = "Year")
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(3, caption = "Time series of the proportion of fish over 10 pounds (top) and over 5 pounds (bottom).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+There appears to be an overall decline in fish size from the mid 1940s until the early 1980s, when fish sizes increased rapidly before declining again until present.
+
+## Fit biased random walk
+
+Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data, with the response being the logit-transformed proportions of fish over 10 and 5 pounds.
+
+```{r model_setup_2}
+## response for fish >10 lbs
+l_size_10 <- matrix(qlogis(p10), nrow = 1)
+
+## response for fish >5 lbs
+l_size_5 <- matrix(qlogis(p5), nrow = 1)
+
+## model setup
+mod_list <- list(
+  B = matrix(1),
+  U = matrix("u"),
+  Q = matrix("q"),
+  Z = matrix(1),
+  A = matrix(0),
+  R = matrix("r")
+)
+```
+
+```{r biased_RW_size}
+## over 10
+## fit model with bias (Eqn 1)
+size_brw_10 <- MARSS(l_size_10, model = mod_list)
+
+## 95% CI for bias
+size_brw_10 <- MARSSparamCIs(size_brw_10)
+
+
+## over 5
+## fit model with bias (Eqn 1)
+size_brw_5 <- MARSS(l_size_5, model = mod_list)
+
+## 95% CI for bias
+size_brw_5 <- MARSSparamCIs(size_brw_5)
+```
+
+## Fit unbiased random walk
+
+```{r unbiased_RW_size}
+## set bias to 0
+mod_list$U <- matrix(0)
+
+## over 10
+## fit model without bias (Eqn 2)
+size_rw_10 <- MARSS(l_size_10, model = mod_list)
+
+## over 5
+## fit model without bias (Eqn 2)
+size_rw_5 <- MARSS(l_size_5, model = mod_list)
+```
+
+\vspace{0.25in}
+
+For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
+
+For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw_5$AICc - size_brw_5$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
+
+## Model fit to size data
+
+```{r plot_size_10_rw, fig.dim = c(6, 4), echo = FALSE}
+## time series plot of size & model fit
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(t(plogis(l_size_10)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
+        las = 1, ylab = "Prop. over 10 kg", xlab = "Year")
+lines(ts(t(plogis(size_rw_10$states)), start = min(tengu_data$year)))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(4, caption = "Time series of observed size (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+```{r plot_size_5_rw, fig.dim = c(6, 4), echo = FALSE}
+## time series plot of size & model fit
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot.ts(ts(t(plogis(l_size_5)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
+        las = 1, ylab = "Prop. over 10 kg", xlab = "Year")
+lines(ts(t(plogis(size_rw_5$states)), start = min(tengu_data$year)))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(5, caption = "Time series of observed size (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+# Comparisons between the Tengu Derby & WDFW
+
+Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in size and CPUE over time. I investigated whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
+
+\begin{gather}
+\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t \\
+\mathbf{x}_t = \mathbf{x}_{t-1} + \mathbf{w}_t
+\end{gather}
+
+For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For both models, I assumed that the observation errors at time $t$ $(\mathbf{v}_t)$ are independent and differently distributed, such that 
+
+$$
+\mathbf{R} =
+\begin{bmatrix}
+r_1 & 0 \\
+0 & r_2
+\end{bmatrix}
+$$
+
+## Fish size
+
+The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
+
+### One pattern over time
+
+For the model with only one state of nature, $\mathbf{Z}$ is a $[2 \times 1]$ vector of 1's, $\mathbf{x}_t$ is a $[1 \times 1]$ scalar of the true state, and $\mathbf{w}_t \sim \text{N}(0, q)$, such that
+
+\begin{gather}
+\begin{bmatrix}
+y_\text{Tengu} \\
+y_\text{WDFW}
+\end{bmatrix}_t
+ = 
+\begin{bmatrix}
+1 \\
+1
+\end{bmatrix}
+x_t + 
+\begin{bmatrix}
+a_\text{Tengu} \\
+a_\text{WDFW}
+\end{bmatrix}
++ 
+\begin{bmatrix}
+v_\text{Tengu} \\
+v_\text{WDFW}
+\end{bmatrix}_t
+\\
+x_t = x_{t-1} + w_t
+\end{gather}
+
+```{r ssm_one_size}
+## total mass of 5 largest fish
+sum_of_top_2 <- apply(tengu_data[,c(9:10)], 1, mean, na.rm = TRUE)
+sum_of_top_2[is.nan(sum_of_top_2)] <- NA
+
+## select common data
+yy <- cbind(tengu = sum_of_top_2[tengu_data$year >= 1970 & tengu_data$year <= 2014],
+            wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
+
+## model defn for Eqns 6 & 7
+mod_list <- list(
+  B = matrix(1),
+  U = matrix(0),
+  Q = matrix("q"),
+  Z = matrix(1, nrow = 2, ncol = 1),
+  A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit Eqns 6 & 7
+size_both_1 <- MARSS(t(log(yy)), model = mod_list)
+```
+
+```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_1$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(5, caption = "Time series of observed fish size from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 6 & 7; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+
+### Two patterns over time
+
+For the model with two different states of nature, $\mathbf{Z}$ is a $[2 \times 2]$ identity matrix, $\mathbf{x}_t$ is a $[2 \times 1]$ vector of the true states, and $\mathbf{w}_t \sim \text{MVN}(\mathbf{0}, \mathbf{Q})$, such that
+
+\begin{gather}
+\begin{bmatrix}
+y_\text{Tengu} \\
+y_\text{WDFW}
+\end{bmatrix}_t
+ = 
+\begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+x_\text{Tengu} \\
+x_\text{WDFW}
+\end{bmatrix}_t
++ 
+\begin{bmatrix}
+a_\text{Tengu} \\
+a_\text{WDFW}
+\end{bmatrix}
++ 
+\begin{bmatrix}
+v_\text{Tengu} \\
+v_\text{WDFW}
+\end{bmatrix}_t
+\\
+\begin{bmatrix}
+x_\text{Tengu} \\
+x_\text{WDFW}
+\end{bmatrix}_t
+= 
+\begin{bmatrix}
+x_\text{Tengu} \\
+x_\text{WDFW}
+\end{bmatrix}_{t-1}
++ 
+\begin{bmatrix}
+w_\text{Tengu} \\
+w_\text{WDFW}
+\end{bmatrix}_t
+\end{gather}
+
+```{r ssm_two_size}
+## model defn for Eqns 8 & 9
+mod_list <- list(
+  B = diag(2),
+  U = matrix("u", nrow = 2, ncol = 1),
+  Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  Z = diag(2),
+  A = matrix(c(0, 0), nrow = 2, ncol = 1),
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit Eqns 8 & 9
+size_both_2 <- MARSS(t(log(yy)), model = mod_list)
+```
+
+```{r plot_ssm_two_size, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(6, caption = "Time series of observed fish size from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+### Summary of size comparison
+
+The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather modest support for two unique temporal patterns in the data.
+
+## CPUE
+
+The time series of CPUE from WDFW begins in 1968 and runs through 2015, but the Tengy Derby data is missing catch information for 2015, so I restricted my analysis to the 47 years from 1968-2014. Because the units for the catch data differ for the two datasets and vary by several orders of magnitude, I log-transformed each of the time series and then normalized them to have mean zero and unit variance.
+
+### One pattern over time
+
+Here is the model for one common temporal trend, analogous to Equations 6 & 7 above.
+
+```{r ssm_one_cpue, cache = TRUE}
+## select common data
+cpue_t <- seq(1950, 2019)
+wdfw_t <- seq(1968, 2015)
+yy <- cbind(tengu = cpue[cpue_t %in% wdfw_t],
+            wdfw = wdfw_data$total)
+
+## standardize the mean and variance
+yy <- scale(log(yy))
+
+## model defn for Eqns 6 & 7
+mod_list <- list(
+  B = matrix(1),
+  U = matrix(0),
+  Q = matrix("q"),
+  Z = matrix(1, nrow = 2, ncol = 1),
+  A = matrix(list(0, "W"), nrow = 2, ncol = 1),
+  R = matrix(list("r", 0, 0, "r"), 2, 2)
+)
+
+## fit Eqns 6 & 7
+cpue_both_1 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
+```
+
+```{r plot_ssm_one_cpue, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+matlines(t(cpue_both_1$states), type = "l", lty = "dashed", lwd = 1, col = c("black"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(7, caption = "Time series of observed CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 6 & 7; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+
+### Two patterns over time
+
+
+```{r ssm_two_cpue}
+## model defn for Eqns 8 & 9
+mod_list <- list(
+  B = diag(2),
+  # U = matrix(c("tengu", "wdfw"), nrow = 2, ncol = 1),
+  U = matrix(c("bias", "bias"), nrow = 2, ncol = 1),
+  # Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  Q = matrix(list("q", 0, 0, "q"), 2, 2),
+  Z = diag(2),
+  A = matrix(list(0, "W"), nrow = 2, ncol = 1),
+  # R = matrix(list("T", 0, 0, "W"), 2, 2)
+  R = matrix(list("r", 0, 0, "r"), 2, 2)
+)
+
+## fit Eqns 8 & 9
+cpue_both_2 <- MARSS(t(yy), model = mod_list, control = list(maxit = 1000))
+```
+
+```{r plot_ssm_two_cpue, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+        ylab = "Standardized CPUE", xlab = "Year", xaxt = "n")
+matlines(t(cpue_both_2$states), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(8, caption = "Time series of observed fish CPUE from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+### Summary of CPUE comparison
+
+The model with one common state has an AICc value of `r round(cpue_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(cpue_both_2$AICc, 1)`, which provides reasonable support for two unique temporal patterns in the data.
+
+
+
