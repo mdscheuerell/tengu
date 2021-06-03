@@ -271,10 +271,6 @@ tengu_sizes <- tengu_data %>%
   select(starts_with("size")) %>%
   apply(1, mean)
 
-
-## get ts of Tengu catch
-# catch <- tengu_data$total_catch[tengu_data$year >= 1970 & tengu_data$year <= 2014]
-
 ## select common data
 yy <- cbind(tengu = tengu_sizes[tengu_data$year >= 1970 & tengu_data$year <= 2014],
             wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
