@@ -1,5 +1,6 @@
 ---
 title: "Shifts in the size of fish from a culturally important recreational fishery"
+subtitle: "Supplementary material to accompany Quinn et al."
 author: "Mark Scheuerell"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 output:
@@ -53,22 +54,24 @@ The data set contains three different indicators of fish size over time:
 
 3) the masses (kg) of the 5 largest fish.
 
-Clearly (1) and (2) will be correlated, as (1) is a subset of (2). Furthermore, the probability of catching a fish greater than 5 or 10 pounds clearly increases as the total number of fish caught also increases. Thus, I modeled the proportion of fish caught in a given year that were greater than the 2 size thresholds.
+Clearly (1) and (2) will be correlated, as (1) is a subset of (2). Furthermore, the probability of catching a fish greater than 5 or 10 pounds clearly increases as the total number of fish caught also increases. Thus, I decided to model the proportion of fish caught in a given year that were greater than the 2 size thresholds. To prevent numerical errors from the necessary logit transform I replaced any `0`'s or `1`'s with `0.001` and `0.999`, respectively.
 
 ```{r prop_of_fish}
-## proportion of fish >10 lbs
-p10 <- tengu_data$n_over_10 / tengu_data$total_catch
-## screen for p = 0 & change to p = 0.001
-p10[p10 == 0] <- 0.001
-
-## proportion of fish >5 lbs
-p5 <- tengu_data$n_over_5 / tengu_data$total_catch
-## screen for p = 1 & change to p = 0.999
-p5[p5 == 1] <- 0.999
-
-## combine proportional data
-fish_sizes <- cbind("Prop. over 10 lbs" = p10, "Prop. over 5 lbs" = p5) %>%
-  ts(start = min(tengu_data$year))
+## proportion of fish >5 lbs & >10 lbs
+size_props <- tengu_data %>%
+  mutate(
+    ## proportion of fish >5 lbs
+    p5 = case_when(
+      n_over_5 == total_catch ~ 0.9999,
+      TRUE ~ n_over_5 / total_catch),
+    ## proportion of fish >10 lbs
+    p10 = case_when(
+      n_over_10 == 0 ~ 0.0001,
+      TRUE ~ n_over_10 / total_catch)) %>%
+  ## select cols of interest
+  select(year, p5, p10) %>%
+  ## remove years prior to 1950 with all NA's
+  filter(year > 1949)
 ```
 
 
@@ -77,9 +80,12 @@ Here are plots of the two size metrics over time.
 ```{r ts_plot_sizes, fig.dim = c(6, 6), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
-        main = "", yax.flip = TRUE,
-        ylab = c("", "", ""), xlab = "Year")
+matplot(size_props[,1], size_props[,(2:3)],
+        las = 1, lwd = 2, type = "l", lty = "solid",
+        col = c("dodgerblue", "darkblue"),
+        xlab = "Year", ylab = "Proportion exceeding")
+text(1954, 0.65, "10 lbs", col = "dodgerblue")
+text(1955, 0.15, "5 lbs", col = "darkblue")
 ```
 
 \setlength{\leftskip}{0.5in}
@@ -97,12 +103,6 @@ plot.ts(fish_sizes, lwd = 2, col = "dodgerblue",
 \vspace{0.25in}
 
 There appears to be an overall decline in fish size from the mid 1940s until the early 1980s, when fish sizes increased rapidly before declining again until present.
-
-## Check annual size data
-size_check <- tengu_data %>%
-  select(starts_with("size")) %>%
-  apply(1, is.na) %>%
-  t()
 
 ## Fit biased random walk
 
@@ -160,9 +160,9 @@ size_rw_5 <- MARSS(l_size_5, model = mod_list)
 
 \vspace{0.25in}
 
-For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
+For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only `r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
 
-For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only ~`r round(size_rw_5$AICc - size_brw_5$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
+For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only `r round(size_rw_5$AICc - size_brw_5$AICc, 1)` units lower than the model without a bias term, again suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
 
 ## Model fit to size data
 
@@ -172,6 +172,15 @@ par(mai = c(0.9, 0.9, 0.1, 0.1))
 plot.ts(ts(t(plogis(l_size_10)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
         las = 1, ylab = "Prop. over 10 lbs", xlab = "Year")
 lines(ts(t(plogis(size_rw_10$states)), start = min(tengu_data$year)))
+
+## time series plot of fish size metrics
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(size_props[,1], size_props[,(2:3)],
+        las = 1, lwd = 2, type = "l", lty = "solid",
+        col = c("dodgerblue", "darkblue"),
+        xlab = "Year", ylab = "Proportion exceeding")
+text(1954, 0.65, "10 lbs", col = "dodgerblue")
+text(1955, 0.15, "5 lbs", col = "darkblue")
 ```
 
 \setlength{\leftskip}{0.5in}
