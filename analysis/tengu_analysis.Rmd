@@ -74,7 +74,6 @@ size_props <- tengu_data %>%
   filter(year > 1949)
 ```
 
-
 Here are plots of the two proportional size metrics over time.
 
 ```{r ts_plot_sizes, fig.dim = c(6, 4), echo = FALSE}
@@ -104,9 +103,20 @@ text(1955, 0.15, "10 lbs", col = "darkblue")
 
 There appears to be an overall decline in fish size from 1950 until the early 1980s, when fish sizes increased rapidly before declining again until present.
 
-## Fit biased random walk
+## Univariate random walk models
 
-Just as I did with the CPUE data, I fit both biased and unbiased forms of random walk models to the fish size data, with the response being the logit-transformed proportions of fish over 10 and 5 pounds.
+I fit both biased and unbiased forms of random walk models to the fish size data, with the response being the logit-transformed proportions of fish over 10 and those over 5 pounds. The models take the general form
+
+\begin{gather}
+x_t = x_{t-1} + u + w_t \\
+y_t = x_t + a + v_t 
+\end{gather}
+
+where $x_t$ is the true, but unobserved size of fish in year $t$, $u$ is the bias term, $y_t$ is the observed proportion of fish exceeding a size threshold, $a$ is an offset, and $w_t$ and $v_t$ are normally distributed process and observation errors, respectively.
+
+By fitting models with and without the bias ($u$) term, we can evaluate the data support for a trend over time. For models with a bias term, we can also obtain a confidence interval around $u$.
+
+## Fit biased random walk
 
 ```{r model_setup_2}
 ## response for fish >10 lbs
@@ -204,13 +214,13 @@ Although the two data sources come from different times, places, and gear types,
 \mathbf{x}_t = \mathbf{x}_{t-1} + \mathbf{w}_t
 \end{gather}
 
-For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For both models, I assumed that the observation errors at time $t$ $(\mathbf{v}_t)$ are independent and differently distributed, such that 
+For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For both models, I assumed that the observation errors at time $t$ $(\mathbf{v}_t)$ are independent and identically distributed, such that 
 
 $$
 \mathbf{R} =
 \begin{bmatrix}
-r_1 & 0 \\
-0 & r_2
+r & 0 \\
+0 & r
 \end{bmatrix}
 $$
 
@@ -247,18 +257,19 @@ x_t = x_{t-1} + w_t
 \end{gather}
 
 ```{r mean_of_top_2}
-## mean mass of 2 largest fish
-mean_of_top_2 <- apply(tengu_data[,c(9:10)], 1, mean, na.rm = TRUE)
-mean_of_top_2[is.nan(mean_of_top_2)] <- NA
-
-## select only years when 5 fish were weighed
+## get mean of top-5; code as NA if <5 fish were weighed
 tengu_sizes <- tengu_data %>%
+  filter(year >= 1970 & year <= 2014) %>%
   select(starts_with("size")) %>%
   apply(1, mean)
 
-## select common data
-yy <- cbind(tengu = tengu_sizes[tengu_data$year >= 1970 & tengu_data$year <= 2014],
-            wdfw = wdfw_data$size[wdfw_data$year >= 1970 & wdfw_data$year <= 2014])
+## get corresponding size data from WDFW
+wdfw_sizes <- wdfw_data %>%
+  filter(year >= 1970 & year <= 2014) %>%
+  select(size)
+
+## combined lengths into matrix for MARSS
+yy <- cbind(tengu = tengu_sizes, wdfw = wdfw_sizes)
 ```
 
 ```{r ssm_one_size}
@@ -269,7 +280,6 @@ mod_list <- list(
   Q = matrix("q"),
   Z = matrix(1, nrow = 2, ncol = 1),
   A = matrix(c("T", "W"), nrow = 2, ncol = 1),
-  # R = matrix(list("T", 0, 0, "W"), 2, 2)
   R = matrix(list("r", 0, 0, "r"), 2, 2)
 )
 
