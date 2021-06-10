@@ -75,7 +75,7 @@ size_props <- tengu_data %>%
 ```
 
 
-Here are plots of the two size metrics over time.
+Here are plots of the two proportional size metrics over time.
 
 ```{r ts_plot_sizes, fig.dim = c(6, 6), echo = FALSE}
 ## time series plot of fish size metrics
@@ -84,8 +84,8 @@ matplot(size_props[,1], size_props[,(2:3)],
         las = 1, lwd = 2, type = "l", lty = "solid",
         col = c("dodgerblue", "darkblue"),
         xlab = "Year", ylab = "Proportion exceeding")
-text(1954, 0.65, "10 lbs", col = "dodgerblue")
-text(1955, 0.15, "5 lbs", col = "darkblue")
+text(1955, 0.65, "5 lbs", col = "dodgerblue")
+text(1955, 0.15, "10 lbs", col = "darkblue")
 ```
 
 \setlength{\leftskip}{0.5in}
@@ -93,7 +93,7 @@ text(1955, 0.15, "5 lbs", col = "darkblue")
 
 \small
 
-`r fig_cap(3, caption = "Time series of the proportion of fish over 10 pounds (top) and over 5 pounds (bottom).", display = "full")` 
+`r fig_cap(3, caption = "Time series of the proportion of fish caught that exceeded 5 pounds (light blue) and 10 pounds (dark blue).", display = "full")` 
 
 \normalsize
 
@@ -110,10 +110,10 @@ Just as I did with the CPUE data, I fit both biased and unbiased forms of random
 
 ```{r model_setup_2}
 ## response for fish >10 lbs
-l_size_10 <- matrix(qlogis(p10), nrow = 1)
+l_size_10 <- matrix(qlogis(size_props$p10), nrow = 1)
 
 ## response for fish >5 lbs
-l_size_5 <- matrix(qlogis(p5), nrow = 1)
+l_size_5 <- matrix(qlogis(size_props$p5), nrow = 1)
 
 ## model setup
 mod_list <- list(
@@ -160,11 +160,11 @@ size_rw_5 <- MARSS(l_size_5, model = mod_list)
 
 \vspace{0.25in}
 
-For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only `r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units lower than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
+For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is actually `r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units greater than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
 
-For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is only `r round(size_rw_5$AICc - size_brw_5$AICc, 1)` units lower than the model without a bias term, again suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
+For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is `r round(size_rw_5$AICc - size_brw_5$AICc, 1)` units greater than the model without a bias term, again suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
 
-## Model fit to size data
+## Model fit to proportional size data
 
 ```{r plot_size_10_rw, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of size & model fit
@@ -179,8 +179,12 @@ matplot(size_props[,1], size_props[,(2:3)],
         las = 1, lwd = 2, type = "l", lty = "solid",
         col = c("dodgerblue", "darkblue"),
         xlab = "Year", ylab = "Proportion exceeding")
-text(1954, 0.65, "10 lbs", col = "dodgerblue")
-text(1955, 0.15, "5 lbs", col = "darkblue")
+text(1955, 0.65, "5 lbs", col = "dodgerblue")
+text(1955, 0.15, "10 lbs", col = "darkblue")
+lines(unlist(size_props[,1]), t(plogis(size_rw_5$states)),
+      lty = "dashed", col = "dodgerblue")
+lines(unlist(size_props[,1]), t(plogis(size_rw_10$states)),
+      lty = "dashed", col = "darkblue")
 ```
 
 \setlength{\leftskip}{0.5in}
