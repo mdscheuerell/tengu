@@ -77,7 +77,7 @@ size_props <- tengu_data %>%
 
 Here are plots of the two proportional size metrics over time.
 
-```{r ts_plot_sizes, fig.dim = c(6, 6), echo = FALSE}
+```{r ts_plot_sizes, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(size_props[,1], size_props[,(2:3)],
@@ -102,7 +102,7 @@ text(1955, 0.15, "10 lbs", col = "darkblue")
 
 \vspace{0.25in}
 
-There appears to be an overall decline in fish size from the mid 1940s until the early 1980s, when fish sizes increased rapidly before declining again until present.
+There appears to be an overall decline in fish size from 1950 until the early 1980s, when fish sizes increased rapidly before declining again until present.
 
 ## Fit biased random walk
 
@@ -167,12 +167,6 @@ For the model based upon the proportion of fish over 5 pounds, the 95% confidenc
 ## Model fit to proportional size data
 
 ```{r plot_size_10_rw, fig.dim = c(6, 4), echo = FALSE}
-## time series plot of size & model fit
-par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(t(plogis(l_size_10)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
-        las = 1, ylab = "Prop. over 10 lbs", xlab = "Year")
-lines(ts(t(plogis(size_rw_10$states)), start = min(tengu_data$year)))
-
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(size_props[,1], size_props[,(2:3)],
@@ -192,29 +186,7 @@ lines(unlist(size_props[,1]), t(plogis(size_rw_10$states)),
 
 \small
 
-`r fig_cap(4, caption = "Time series of observed size (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
-
-\normalsize
-
-\setlength{\leftskip}{0in}
-\setlength{\rightskip}{0in}
-
-\vspace{0.25in}
-
-```{r plot_size_5_rw, fig.dim = c(6, 4), echo = FALSE}
-## time series plot of size & model fit
-par(mai = c(0.9, 0.9, 0.1, 0.1))
-plot.ts(ts(t(plogis(l_size_5)), start = min(tengu_data$year)), lwd = 2, col = "dodgerblue",
-        las = 1, ylab = "Prop. over 5 lbs", xlab = "Year")
-lines(ts(t(plogis(size_rw_5$states)), start = min(tengu_data$year)))
-```
-
-\setlength{\leftskip}{0.5in}
-\setlength{\rightskip}{0.5in}
-
-\small
-
-`r fig_cap(5, caption = "Time series of observed size (blue) and the fit for the random walk model (Eqn 3; black).", display = "full")` 
+`r fig_cap(4, caption = "Time series of the proportion of fish caught that exceeded 5 pounds (solid, light blue) and 10 pounds (solid, dark blue), and the fitted values from their respective models (dashed lines).", display = "full")` 
 
 \normalsize
 
