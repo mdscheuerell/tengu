@@ -289,7 +289,8 @@ size_both_1 <- MARSS(t(log(yy)), model = mod_list)
 
 ```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE}
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+matplot(yy, type = "o", lty = "solid", lwd = 2, pch = 16,
+        col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
 matlines(t(exp(size_both_1$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
@@ -374,7 +375,8 @@ size_both_2 <- MARSS(t(log(yy)), model = mod_list)
 
 ```{r plot_ssm_two_size, fig.dim = c(6, 4), echo = FALSE}
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(yy, type = "l", lty = "solid", lwd = 2, col = c("dodgerblue", "indianred"),
+matplot(yy, type = "o", lty = "solid", lwd = 2, pch = 16,
+        col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
 matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
