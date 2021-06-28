@@ -256,7 +256,7 @@ v_\text{WDFW}
 x_t = x_{t-1} + w_t
 \end{gather}
 
-```{r mean_of_top_2}
+```{r mean_of_top_5}
 ## get mean of top-5; code as NA if <5 fish were weighed
 tengu_sizes <- tengu_data %>%
   filter(year >= 1970 & year <= 2014) %>%
@@ -400,6 +400,38 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather strong support for two unique temporal patterns in the data.
 
+# Additional figures for paper
 
+Here are some additional plots for the supplemental material.
+
+```{r plot_size_metrics, fig.dim = c(6, 6), echo = FALSE}
+tengu_max <- tengu_data %>%
+  filter(year >= 1970 & year <= 2019) %>%
+  select(starts_with("size")) %>%
+  apply(1, max, na.rm = TRUE)
+tengu_max[is.infinite(tengu_max)] <- NA 
+
+pdf("suppl_figs.pdf", height = 8, width = 6)
+par(mfrow = c(2,1),
+    mai = c(0.9, 0.9, 0.1, 0.1))
+
+## largest fish
+plot(seq(1970, 2019), tengu_max,
+     las = 1, type = "o", pch = 16, lwd = 2,
+     col = "purple",
+     xlab = "Year",
+     ylab = "Maximum size (kg)")
+
+## proportion exceeding
+matplot(size_props[,1], size_props[,(2:3)],
+        las = 1, pch = 16,
+        lwd = 2, type = "o", lty = "solid",
+        col = c("dodgerblue", "darkblue"),
+        xlab = "Year", ylab = "Proportion of fish exceeding")
+text(1955, 0.65, "5 lbs", col = "dodgerblue")
+text(1955, 0.15, "10 lbs", col = "darkblue")
+
+dev.off()
+```
 
 
