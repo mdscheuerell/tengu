@@ -283,8 +283,12 @@ mod_list <- list(
   R = matrix(list("r", 0, 0, "r"), 2, 2)
 )
 
-## fit Eqns 5 & 6
-size_both_1 <- MARSS(t(log(yy)), model = mod_list)
+## fit unbiased RW (Eqns 5 & 6)
+size_both_1u <- MARSS(t(log(yy)), model = mod_list)
+
+## fit biased RW (Eqns ? & ?)
+mod_list$U <- matrix("u")
+size_both_1b <- MARSS(t(log(yy)), model = mod_list)
 ```
 
 ```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE}
@@ -292,7 +296,7 @@ par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(yy, type = "o", lty = "solid", lwd = 2, pch = 16,
         col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_1$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"))
+matlines(t(exp(size_both_1u$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
 
@@ -360,7 +364,7 @@ w_\text{WDFW}
 ## model defn for Eqns 7 & 8
 mod_list <- list(
   B = diag(2),
-  U = matrix("u", nrow = 2, ncol = 1),
+  U = matrix(c("T", "W"), nrow = 2, ncol = 1),
   # Q = matrix(list("T", 0, 0, "W"), 2, 2),
   Q = matrix(list("q", 0, 0, "q"), 2, 2),
   Z = diag(2),
@@ -369,8 +373,19 @@ mod_list <- list(
   R = matrix(list("r", 0, 0, "r"), 2, 2)
 )
 
-## fit Eqns 7 & 8
-size_both_2 <- MARSS(t(log(yy)), model = mod_list)
+## fit biased RW (Eqns ? & ?)
+size_both_2b <- MARSS(t(log(yy)), model = mod_list)
+
+## fit unbiased RW (Eqns 7 & 8)
+mod_list$U <- matrix(0, nrow = 2, ncol = 1)
+size_both_2u <- MARSS(t(log(yy)), model = mod_list)
+
+## fit model with bias in WDFW, but none in Tengu
+UU <- matrix(list(0), 2, 1)
+UU[1] <- "T"
+mod_list$U <- UU
+size_both_2m <- MARSS(t(log(yy)), model = mod_list)
+
 ```
 
 ```{r plot_ssm_two_size, fig.dim = c(6, 4), echo = FALSE}
@@ -378,7 +393,7 @@ par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(yy, type = "o", lty = "solid", lwd = 2, pch = 16,
         col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_2$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+matlines(t(exp(size_both_2u$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
 
@@ -398,7 +413,7 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 ### Summary of size comparison
 
-The model with one common state has an AICc value of `r round(size_both_1$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2$AICc, 1)`, which indicates rather strong support for two unique temporal patterns in the data.
+The model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for two unique temporal patterns in the data.
 
 # Additional figures for paper
 
