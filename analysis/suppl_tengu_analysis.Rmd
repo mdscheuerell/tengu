@@ -75,7 +75,7 @@ size_props <- tengu_data %>%
 
 Here are plots of the two proportional size metrics over time.
 
-```{r ts_plot_sizes, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+```{r ts_plot_props, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(size_props[,1], size_props[,(2:3)],
@@ -91,7 +91,7 @@ text(1955, 0.15, "10 lbs", col = "darkblue")
 
 \small
 
-`r fig_cap(3, caption = "Time series of the proportion of fish caught that exceeded 5 pounds (light blue) and 10 pounds (dark blue).", display = "full")` 
+`r fig_cap(1, caption = "Time series of the proportion of fish caught in the Tengu Derby that exceeded 5 pounds (light blue) and 10 pounds (dark blue).", display = "full")` 
 
 \normalsize
 
@@ -112,6 +112,31 @@ tengu_sizes <- tengu_data %>%
   rowwise(year) %>% 
   summarise(tengu_mean_kg = mean(c_across(everything())))
 ```
+
+```{r ts_plot_props, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+## time series plot of fish size metrics
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot(tengu_sizes$year, tengu_sizes$tengu_mean_kg,
+     las = 1, xaxt = "n",
+     type = "o", lty = "solid", lwd = 2,
+     pch = 16, col = "dodgerblue",
+     xlab = "Year", ylab = "Mean mass (kg)")
+axis(1, at = seq(1950, 2020, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(2, caption = "Time series of the mean mass of the five largest fish caught in the Tengu Derby.", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
 
 
 # Comparisons between the Tengu Derby & WDFW
