@@ -14,6 +14,7 @@ geometry: margin=1in
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 
 library(dplyr)
+library(tidyr)
 library(MARSS)
 
 ## plot hook to increase margins
@@ -54,29 +55,27 @@ The data set contains three different indicators of fish size over time:
 
 3) the masses (kg) of the 5 largest fish.
 
-Clearly (1) and (2) will be correlated, as (1) is a subset of (2). Furthermore, the probability of catching a fish greater than 5 or 10 pounds clearly increases as the total number of fish caught also increases. Thus, I decided to model the proportion of fish caught in a given year that were greater than the 2 size thresholds. To prevent numerical errors from the necessary logit transform I replaced any `0`'s or `1`'s with `0.001` and `0.999`, respectively.
+Clearly (1) and (2) will be correlated, as (1) is a subset of (2). Furthermore, the probability of catching a fish greater than 5 or 10 pounds clearly increases as the total number of fish caught also increases. Thus, we calculated the proportion of fish caught in a given year that were greater than the two size thresholds.
+
+## Proportions of large fish
 
 ```{r prop_of_fish}
 ## proportion of fish >5 lbs & >10 lbs
 size_props <- tengu_data %>%
   mutate(
     ## proportion of fish >5 lbs
-    p5 = case_when(
-      n_over_5 == total_catch ~ 0.9999,
-      TRUE ~ n_over_5 / total_catch),
+    p5 = n_over_5 / total_catch,
     ## proportion of fish >10 lbs
-    p10 = case_when(
-      n_over_10 == 0 ~ 0.0001,
-      TRUE ~ n_over_10 / total_catch)) %>%
+    p10 = n_over_10 / total_catch) %>%
   ## select cols of interest
   select(year, p5, p10) %>%
   ## remove years prior to 1950 with all NA's
-  filter(year > 1949)
+  filter(!(is.na(p5) & is.na(p10)))
 ```
 
 Here are plots of the two proportional size metrics over time.
 
-```{r ts_plot_sizes, fig.dim = c(6, 4), echo = FALSE}
+```{r ts_plot_sizes, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(size_props[,1], size_props[,(2:3)],
@@ -103,186 +102,42 @@ text(1955, 0.15, "10 lbs", col = "darkblue")
 
 There appears to be an overall decline in fish size from 1950 until the early 1980s, when fish sizes increased rapidly before declining again until present.
 
-## Univariate random walk models
+## Mean of 5 largest fish
 
-I fit both biased and unbiased forms of random walk models to the fish size data, with the response being the logit-transformed proportions of fish over 10 and those over 5 pounds. The models take the general form
-
-\begin{gather}
-x_t = x_{t-1} + u + w_t \\
-y_t = x_t + a + v_t 
-\end{gather}
-
-where $x_t$ is the true, but unobserved size of fish in year $t$, $u$ is the bias term, $y_t$ is the observed proportion of fish exceeding a size threshold, $a$ is an offset, and $w_t$ and $v_t$ are normally distributed process and observation errors, respectively.
-
-By fitting models with and without the bias ($u$) term, we can evaluate the data support for a trend over time. For models with a bias term, we can also obtain a confidence interval around $u$.
-
-## Fit biased random walk
-
-```{r model_setup_2}
-## response for fish >10 lbs
-l_size_10 <- matrix(qlogis(size_props$p10), nrow = 1)
-
-## response for fish >5 lbs
-l_size_5 <- matrix(qlogis(size_props$p5), nrow = 1)
-
-## model setup
-mod_list <- list(
-  B = matrix(1),
-  U = matrix("u"),
-  Q = matrix("q"),
-  Z = matrix(1),
-  A = matrix(0),
-  R = matrix("r")
-)
-```
-
-```{r biased_RW_size}
-## over 10
-## fit model with bias (Eqn 1)
-size_brw_10 <- MARSS(l_size_10, model = mod_list)
-
-## 95% CI for bias
-size_brw_10 <- MARSSparamCIs(size_brw_10)
-
-
-## over 5
-## fit model with bias (Eqn 1)
-size_brw_5 <- MARSS(l_size_5, model = mod_list)
-
-## 95% CI for bias
-size_brw_5 <- MARSSparamCIs(size_brw_5)
-```
-
-## Fit unbiased random walk
-
-```{r unbiased_RW_size}
-## set bias to 0
-mod_list$U <- matrix(0)
-
-## over 10
-## fit model without bias (Eqn 2)
-size_rw_10 <- MARSS(l_size_10, model = mod_list)
-
-## over 5
-## fit model without bias (Eqn 2)
-size_rw_5 <- MARSS(l_size_5, model = mod_list)
-```
-
-\vspace{0.25in}
-
-For the model based upon the proportion of fish over 10 pounds, the 95% confidence interval for the bias term $(u)$ is (`r round(c(size_brw_10$par.lowCI$U, size_brw_10$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is actually `r round(size_rw_10$AICc - size_brw_10$AICc, 1)` units greater than the model without a bias term, suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. This is not much of a surprise, however, given the apparent temporal patterns in the data.
-
-For the model based upon the proportion of fish over 5 pounds, the 95% confidence interval for the bias term $(u)$ is (`r -1*round(c(size_brw_5$par.lowCI$U, size_brw_5$par.upCI$U), 3)`), and the model with a bias term has an AIC value that is `r -1*round(size_rw_5$AICc - size_brw_5$AICc, 1)` units greater than the model without a bias term, again suggesting there is essentially no data support for a systematic downward trend in the log-transformed size over time. 
-
-## Model fit to proportional size data
-
-```{r plot_size_10_rw, fig.dim = c(6, 4), echo = FALSE}
-## time series plot of fish size metrics
-par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(size_props[,1], size_props[,(2:3)],
-        las = 1, lwd = 2, type = "l", lty = "solid",
-        col = c("dodgerblue", "darkblue"),
-        xlab = "Year", ylab = "Proportion exceeding")
-text(1955, 0.65, "5 lbs", col = "dodgerblue")
-text(1955, 0.15, "10 lbs", col = "darkblue")
-lines(unlist(size_props[,1]), t(plogis(size_rw_5$states)),
-      lty = "dashed", col = "dodgerblue")
-lines(unlist(size_props[,1]), t(plogis(size_rw_10$states)),
-      lty = "dashed", col = "darkblue")
-```
-
-\setlength{\leftskip}{0.5in}
-\setlength{\rightskip}{0.5in}
-
-\small
-
-`r fig_cap(4, caption = "Time series of the proportion of fish caught that exceeded 5 pounds (solid, light blue) and 10 pounds (solid, dark blue), and the fitted values from their respective models (dashed lines).", display = "full")` 
-
-\normalsize
-
-\setlength{\leftskip}{0in}
-\setlength{\rightskip}{0in}
-
-\vspace{0.25in}
-
-# Comparisons between the Tengu Derby & WDFW
-
-Although the two data sources come from different times, places, and gear types, they both contain information on the temporal changes in size and CPUE over time. I investigated whether or not the temporal trends in the two data sources track one another (i.e., are representative of one "state of nature"). To do so, I used a multivariate state-space model of the general form
-
-\begin{gather}
-\mathbf{y}_t = \mathbf{Z} \mathbf{x}_t + \mathbf{a} + \mathbf{v}_t \\
-\mathbf{x}_t = \mathbf{x}_{t-1} + \mathbf{w}_t
-\end{gather}
-
-For both forms of the model, $\mathbf{y}_t$ is a $[2 \times 1]$ vector of the observed data from both sources, $\mathbf{a}$ is a $[2 \times 1]$ vector of offsets (intercepts), and $\mathbf{v}_t \sim \text{MVN}(\mathbf{0}, \mathbf{R})$. For both models, I assumed that the observation errors at time $t$ $(\mathbf{v}_t)$ are independent and identically distributed, such that 
-
-$$
-\mathbf{R} =
-\begin{bmatrix}
-r & 0 \\
-0 & r
-\end{bmatrix}
-$$
-
-## Fish size
-
-The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
-
-### One pattern over time
-
-For the model with only one state of nature, $\mathbf{Z}$ is a $[2 \times 1]$ vector of 1's, $\mathbf{x}_t$ is a $[1 \times 1]$ scalar of the true state, and $\mathbf{w}_t \sim \text{N}(0, q)$, such that
-
-\begin{gather}
-\begin{bmatrix}
-y_\text{Tengu} \\
-y_\text{WDFW}
-\end{bmatrix}_t
- = 
-\begin{bmatrix}
-1 \\
-1
-\end{bmatrix}
-x_t + 
-\begin{bmatrix}
-a_\text{Tengu} \\
-a_\text{WDFW}
-\end{bmatrix}
-+ 
-\begin{bmatrix}
-v_\text{Tengu} \\
-v_\text{WDFW}
-\end{bmatrix}_t
-\\
-x_t = x_{t-1} + w_t
-\end{gather}
-
-```{r mean_of_top_5}
+```{r mean_of_big_fish}
 ## get mean of top-5; code as NA if <5 fish were weighed
 tengu_sizes <- tengu_data %>%
   #filter(year >= 1970 & year <= 2014) %>%
   select(starts_with(c("year", "size"))) %>%
   rowwise(year) %>% 
   summarise(tengu_mean_kg = mean(c_across(everything())))
+```
 
-# tengu_sizes <- tengu_data %>%
-#   #filter(year >= 1970 & year <= 2014) %>%
-#   select(starts_with("size")) %>%
-#   apply(1, mean)
 
+# Comparisons between the Tengu Derby & WDFW
+
+## Fish size
+
+The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
+
+
+```{r both_sizes}
 ## get corresponding size data from WDFW
 wdfw_sizes <- wdfw_data %>%
-  #filter(year >= 1970 & year <= 2014) %>%
+  drop_na(size) %>%
   select(year, size) %>%
   rename(wdfw_mean_kg = size)
 
-tengu_sizes %>% left_join(wdfw_sizes, by = "year")
+both_size <- tengu_sizes %>%
+  left_join(wdfw_sizes, by = "year") %>%
+  filter(!(is.na(tengu_mean_kg) & is.na(wdfw_mean_kg)))
 
 ## combined lengths into matrix for MARSS
 yy <- cbind(tengu = tengu_sizes, wdfw = wdfw_sizes)
 ```
 
 ```{r ssm_one_size}
-## model defn for Eqns 5 & 6
+## model defn
 mod_list <- list(
   B = matrix(1),
   U = matrix(0),
@@ -324,50 +179,6 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 \vspace{0.25in}
 
 
-### Two patterns over time
-
-For the model with two different states of nature, $\mathbf{Z}$ is a $[2 \times 2]$ identity matrix, $\mathbf{x}_t$ is a $[2 \times 1]$ vector of the true states, and $\mathbf{w}_t \sim \text{MVN}(\mathbf{0}, \mathbf{Q})$, such that
-
-\begin{gather}
-\begin{bmatrix}
-y_\text{Tengu} \\
-y_\text{WDFW}
-\end{bmatrix}_t
- = 
-\begin{bmatrix}
-1 & 0 \\
-0 & 1
-\end{bmatrix}
-\begin{bmatrix}
-x_\text{Tengu} \\
-x_\text{WDFW}
-\end{bmatrix}_t
-+ 
-\begin{bmatrix}
-a_\text{Tengu} \\
-a_\text{WDFW}
-\end{bmatrix}
-+ 
-\begin{bmatrix}
-v_\text{Tengu} \\
-v_\text{WDFW}
-\end{bmatrix}_t
-\\
-\begin{bmatrix}
-x_\text{Tengu} \\
-x_\text{WDFW}
-\end{bmatrix}_t
-= 
-\begin{bmatrix}
-x_\text{Tengu} \\
-x_\text{WDFW}
-\end{bmatrix}_{t-1}
-+ 
-\begin{bmatrix}
-w_\text{Tengu} \\
-w_\text{WDFW}
-\end{bmatrix}_t
-\end{gather}
 
 ```{r ssm_two_size}
 ## model defn for Eqns 7 & 8
