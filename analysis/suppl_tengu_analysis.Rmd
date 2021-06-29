@@ -113,7 +113,7 @@ tengu_sizes <- tengu_data %>%
   summarise(tengu_mean_kg = mean(c_across(everything())))
 ```
 
-```{r ts_plot_props, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+```{r ts_plot_means, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 plot(tengu_sizes$year, tengu_sizes$tengu_mean_kg,
@@ -137,6 +137,90 @@ axis(1, at = seq(1950, 2020, 10))
 \setlength{\rightskip}{0in}
 
 \vspace{0.25in}
+
+# Models for Tengu Derby fish mass
+
+## Unbiased random walk
+
+```{r fit_tengu_urw}
+## model defn
+mod_list <- list(
+  B = matrix(1),
+  U = matrix(0),
+  Q = matrix("q"),
+  Z = matrix(1),
+  #A = matrix("a"),
+  R = matrix("r")
+)
+
+## data for {MARSS}
+yy <- matrix(tengu_sizes$tengu_mean_kg, nrow = 1) %>%
+  log()
+
+## fit unbiased RW
+size_tengu_urw <- MARSS(yy, model = mod_list)
+```
+
+
+## Biased random walk
+
+```{r fit_tengu_brw}
+## update model defn
+mod_list$U <- matrix("u")
+
+## fit biased RW
+size_tengu_brw <- MARSS(yy, model = mod_list)
+```
+
+## Compare models
+
+```{r compare_models}
+## AICc for unbiased RW
+size_tengu_urw$AICc
+## AICc for biased RW
+size_tengu_brw$AICc
+```
+
+## Plot model fit
+
+```{r ts_plot_means, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+## calculate approx 95% CI's
+upCI <- exp(size_tengu_urw$states + 2*size_tengu_urw$states.se)
+loCI <- exp(size_tengu_urw$states - 2*size_tengu_urw$states.se)
+
+## time series plot of fish size metrics
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+plot(tengu_sizes$year, tengu_sizes$tengu_mean_kg,
+     las = 1, xaxt = "n",
+     type = "o", lty = "solid", lwd = 2,
+     pch = 16, col = "dodgerblue",
+     xlab = "Year", ylab = "Mean mass (kg)")
+lines(tengu_sizes$year,
+      t(upCI),
+      col = "gray", lty = "solid", lwd = 2,)
+lines(tengu_sizes$year,
+      t(exp(size_tengu_urw$states)),
+      col = "black", lty = "solid", lwd = 2,)
+lines(tengu_sizes$year,
+      t(loCI),
+      col = "gray", lty = "solid", lwd = 2,)
+axis(1, at = seq(1950, 2020, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(3, caption = "Time series of the mean mass of the five largest fish caught in the Tengu Derby (solid) and the model fitted values (dashed).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
 
 
 # Comparisons between the Tengu Derby & WDFW
