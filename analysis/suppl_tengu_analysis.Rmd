@@ -75,7 +75,7 @@ size_props <- tengu_data %>%
 
 Here are plots of the two proportional size metrics over time.
 
-```{r ts_plot_props, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+```{r ts_plot_props, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(size_props[,1], size_props[,(2:3)],
@@ -113,7 +113,7 @@ tengu_sizes <- tengu_data %>%
   summarise(tengu_mean_kg = mean(c_across(everything())))
 ```
 
-```{r ts_plot_means, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+```{r ts_plot_means, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 plot(tengu_sizes$year, tengu_sizes$tengu_mean_kg,
@@ -149,7 +149,6 @@ mod_list <- list(
   U = matrix(0),
   Q = matrix("q"),
   Z = matrix(1),
-  #A = matrix("a"),
   R = matrix("r")
 )
 
@@ -183,7 +182,7 @@ size_tengu_brw$AICc
 
 ## Plot model fit
 
-```{r ts_plot_means, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
+```{r ts_plot_fits, fig.dim = c(6, 4), echo = FALSE}
 ## calculate approx 95% CI's
 upCI <- exp(size_tengu_urw$states + 2*size_tengu_urw$states.se)
 loCI <- exp(size_tengu_urw$states - 2*size_tengu_urw$states.se)
@@ -225,10 +224,9 @@ axis(1, at = seq(1950, 2020, 10))
 
 # Comparisons between the Tengu Derby & WDFW
 
-## Fish size
+## Combined data sets
 
 The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so we restricted our analysis to the 45 years from 1970-2014. Again, we fit models to the log-transformed size data.
-
 
 ```{r both_sizes}
 ## get corresponding size data from WDFW
@@ -253,7 +251,9 @@ y2 <- tengu_sizes %>%
   t()
 ```
 
-## Unbiased random walk
+## One-state models
+
+### Unbiased random walk
 
 ```{r ssm_one_size}
 ## model defn
@@ -270,7 +270,7 @@ mod_list <- list(
 size_both_1u <- MARSS(y2, model = mod_list)
 ```
 
-## Biased random walk
+### Biased random walk
 
 ```{r}
 ## update model list
@@ -280,9 +280,86 @@ mod_list$U <- matrix("u")
 size_both_1b <- MARSS(y2, model = mod_list)
 ```
 
-## Plot fitted values
 
-```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE}
+## Two-state models
+
+### Unbiased random walk
+
+```{r ssm_two_size}
+## model defn
+mod_list <- list(
+  B = diag(2),
+  U = matrix(0, nrow = 2, ncol = 1),
+  Q = matrix(list("T", 0, 0, "W"), 2, 2),
+  # Q = matrix(list("q", 0, 0, "q"), 2, 2),
+  Z = diag(2),
+  # A = matrix(c("T", "W"), nrow = 2, ncol = 1),
+  A = matrix(c(0, 0), nrow = 2, ncol = 1),
+  # R = matrix(list("r", 0, 0, "r"), 2, 2)
+  R = matrix(list("T", 0, 0, "W"), 2, 2)
+)
+
+## fit biased RW (Eqns ? & ?)
+size_both_2u <- MARSS(y2, model = mod_list)
+```
+
+### Unbiased random walk
+
+```{r}
+## update model defn
+mod_list$U <- matrix(c("T", "W"), nrow = 2, ncol = 1)
+
+## fit biased RW
+size_both_2b <- MARSS(y2, model = mod_list)
+```
+
+## Compare models
+
+```{r compare_models_both}
+## AICc for unbiased RW
+size_both_2u$AICc
+## AICc for biased RW
+size_both_2b$AICc
+```
+
+The unbiased random walk has an AICc score that is slightly greater than the biased random walk, but it's more simple and should be favored here.
+
+## Plot model fits
+
+```{r plot_ssm_two_sizes, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
+        las = 1,
+        col = c("dodgerblue", "indianred"),
+        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+matlines(t(exp(size_both_2u$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+\setlength{\leftskip}{0.5in}
+\setlength{\rightskip}{0.5in}
+
+\small
+
+`r fig_cap(6, caption = "Time series of observed fish size from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model for both series (dashed lines).", display = "full")` 
+
+\normalsize
+
+\setlength{\leftskip}{0in}
+\setlength{\rightskip}{0in}
+
+\vspace{0.25in}
+
+### Summary of size comparison
+
+The model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for two unique temporal patterns in the data.
+
+
+# Additional figures for paper
+
+## Plot fitted values for one-state model
+
+```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE, eval = FALSE}
 par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
         col = c("dodgerblue", "indianred"),
@@ -305,68 +382,11 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 \vspace{0.25in}
 
-
-
-```{r ssm_two_size}
-## model defn for Eqns 7 & 8
-mod_list <- list(
-  B = diag(2),
-  U = matrix(c("T", "W"), nrow = 2, ncol = 1),
-  # Q = matrix(list("T", 0, 0, "W"), 2, 2),
-  Q = matrix(list("q", 0, 0, "q"), 2, 2),
-  Z = diag(2),
-  A = matrix(c(0, 0), nrow = 2, ncol = 1),
-  # R = matrix(list("T", 0, 0, "W"), 2, 2)
-  R = matrix(list("r", 0, 0, "r"), 2, 2)
-)
-
-## fit biased RW (Eqns ? & ?)
-size_both_2b <- MARSS(t(log(yy)), model = mod_list)
-
-## fit unbiased RW (Eqns 7 & 8)
-mod_list$U <- matrix(0, nrow = 2, ncol = 1)
-size_both_2u <- MARSS(t(log(yy)), model = mod_list)
-
-## fit model with bias in WDFW, but none in Tengu
-UU <- matrix(list(0), 2, 1)
-UU[1] <- "T"
-mod_list$U <- UU
-size_both_2m <- MARSS(t(log(yy)), model = mod_list)
-
-```
-
-```{r plot_ssm_two_size, fig.dim = c(6, 4), echo = FALSE}
-par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(yy, type = "o", lty = "solid", lwd = 2, pch = 16,
-        col = c("dodgerblue", "indianred"),
-        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_2u$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
-axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
-```
-
-\setlength{\leftskip}{0.5in}
-\setlength{\rightskip}{0.5in}
-
-\small
-
-`r fig_cap(6, caption = "Time series of observed fish size from the Tengu derby (blue) and WDFW surveys (red), including fits from the multivariate random walk model (Eqns 8 & 9; dashed).", display = "full")` 
-
-\normalsize
-
-\setlength{\leftskip}{0in}
-\setlength{\rightskip}{0in}
-
-\vspace{0.25in}
-
-### Summary of size comparison
-
-The model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for two unique temporal patterns in the data.
-
-# Additional figures for paper
+## Other size metrics
 
 Here are some additional plots for the supplemental material.
 
-```{r plot_size_metrics, fig.dim = c(6, 6), echo = FALSE}
+```{r plot_size_metrics, fig.dim = c(6, 6), echo = FALSE, eval = FALSE}
 tengu_max <- tengu_data %>%
   filter(year >= 1970 & year <= 2019) %>%
   select(starts_with("size")) %>%
