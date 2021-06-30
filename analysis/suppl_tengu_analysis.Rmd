@@ -227,23 +227,33 @@ axis(1, at = seq(1950, 2020, 10))
 
 ## Fish size
 
-The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so I restricted my analysis to the 45 years from 1970-2014. Again I fit models to the log-transformed size data.
+The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so we restricted our analysis to the 45 years from 1970-2014. Again, we fit models to the log-transformed size data.
 
 
 ```{r both_sizes}
 ## get corresponding size data from WDFW
 wdfw_sizes <- wdfw_data %>%
+  ## drop first 2 years with NA's for size
   drop_na(size) %>%
+  ## keep year & size
   select(year, size) %>%
+  ## rename size
   rename(wdfw_mean_kg = size)
 
-both_size <- tengu_sizes %>%
+## combine data sets for {MARSS}
+y2 <- tengu_sizes %>%
   left_join(wdfw_sizes, by = "year") %>%
-  filter(!(is.na(tengu_mean_kg) & is.na(wdfw_mean_kg)))
-
-## combined lengths into matrix for MARSS
-yy <- cbind(tengu = tengu_sizes, wdfw = wdfw_sizes)
+  ungroup() %>%
+  ## drop non-overlapping years
+  filter(year >= 1970 & year <= 2014) %>%
+  ## drop year
+  select(-year) %>%
+  ## log-transform
+  log() %>%
+  t()
 ```
+
+## Unbiased random walk
 
 ```{r ssm_one_size}
 ## model defn
@@ -257,16 +267,24 @@ mod_list <- list(
 )
 
 ## fit unbiased RW (Eqns 5 & 6)
-size_both_1u <- MARSS(t(log(yy)), model = mod_list)
+size_both_1u <- MARSS(y2, model = mod_list)
+```
+
+## Biased random walk
+
+```{r}
+## update model list
+mod_list$U <- matrix("u")
 
 ## fit biased RW (Eqns ? & ?)
-mod_list$U <- matrix("u")
-size_both_1b <- MARSS(t(log(yy)), model = mod_list)
+size_both_1b <- MARSS(y2, model = mod_list)
 ```
+
+## Plot fitted values
 
 ```{r plot_ssm_one_size, fig.dim = c(6, 4), echo = FALSE}
 par(mai = c(0.9, 0.9, 0.1, 0.1))
-matplot(yy, type = "o", lty = "solid", lwd = 2, pch = 16,
+matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
         col = c("dodgerblue", "indianred"),
         ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
 matlines(t(exp(size_both_1u$states)), type = "l", lty = "dashed", lwd = 1, col = c("black"))
