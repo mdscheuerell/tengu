@@ -226,7 +226,7 @@ axis(1, at = seq(1950, 2020, 10))
 
 ## Combined data sets
 
-The time series from WDFW begins in 1970 and runs through 2015, but the Tengy Derby data is missing size information for 2015, so we restricted our analysis to the 45 years from 1970-2014. Again, we fit models to the log-transformed size data.
+The time series from WDFW begins in 1970 and runs through 2019, so we restricted our analysis to the 45 years from 1970-2019. Again, we fit models to the log-transformed size data.
 
 ```{r both_sizes}
 ## get corresponding size data from WDFW
@@ -243,7 +243,7 @@ y2 <- tengu_sizes %>%
   left_join(wdfw_sizes, by = "year") %>%
   ungroup() %>%
   ## drop non-overlapping years
-  filter(year >= 1970 & year <= 2014) %>%
+  filter(year >= 1970 & year <= 2019) %>%
   ## drop year
   select(-year) %>%
   ## log-transform
