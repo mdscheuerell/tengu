@@ -384,6 +384,20 @@ axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 
 ## Other size metrics
 
+## Proportions of large fish
+
+```{r prop_of_big_fish}
+## proportion of fish >5 lbs & >10 lbs
+big_per_angler <- tengu_data %>%
+  mutate(
+    ## proportion of fish >5 lbs
+    b5 = n_over_5 / members,
+    ## proportion of fish >10 lbs
+    b10 = n_over_10 / members) %>%
+  ## select cols of interest
+  select(year, b5, b10)
+```
+
 Here are some additional plots for the supplemental material.
 
 ```{r plot_size_metrics, fig.dim = c(6, 8), message = FALSE}
@@ -405,13 +419,13 @@ plot(tengu_max$year, tengu_max$tengu_max_kg,
      ylab = "Maximum size (kg)")
 
 ## proportion exceeding
-matplot(size_props[,1], size_props[,(2:3)],
+matplot(big_per_angler[,1], big_per_angler[,(2:3)],
         las = 1, pch = 16, xlim = c(1945, 2020),
         lwd = 2, type = "o", lty = "solid",
         col = c("dodgerblue", "darkblue"),
-        xlab = "Year", ylab = "Proportion of fish exceeding")
-text(1955, 0.65, "5 lbs", col = "dodgerblue")
-text(1955, 0.15, "10 lbs", col = "darkblue")
+        xlab = "Year", ylab = "Big fish per angler")
+text(1955, 0.72, "5 lbs", col = "dodgerblue")
+text(1955, 0.12, "10 lbs", col = "darkblue")
 ```
 
 
