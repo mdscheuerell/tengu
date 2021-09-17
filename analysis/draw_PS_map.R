@@ -7,14 +7,11 @@
 
 ## housekeeping
 
-# library(tidyverse)
-# library(readxl)
 library(here)
 library(rgdal)
 library(broom)
 library(ggplot2)
-# library(ggpubr)
-# library(sf)
+library(cowplot)
 
 ## figure save dir
 fig_dir <- here("figures")
@@ -27,68 +24,81 @@ usa_spdf <- readOGR(dsn = here("analysis", "map_files", "USA_adm0.shp"))
 ## convert to df(ish)
 usa_spdf_fort <- tidy(usa_spdf)
 
-## load BC shape file
-BC_shp <- readOGR(dsn = here("analysis", "map_files", "canada", "lpr_000b16a_e.shp"))
-## set coord ref system
-BC_shp_transform <- spTransform(BC_shp, "+init=epsg:4326")
-## convert to df(ish)
-BC_spdf_fort <- tidy(BC_shp_transform)
 
-
-# Create map in ggplot
-
-PS_map <- ggplot(usa_spdf_fort, aes(x = long, y = lat, group = group))+
-  # Create grid using geom_vline and geom_hline
-  # geom_vline(xintercept = seq(-123.1, min_lon, 1/nm), color = "gray50", size = 0.1)+
-  # geom_hline(yintercept = seq(min_lat, 48.5, 1/60), color = "gray50", size = 0.1)+
-  #base map
-  geom_polygon(color = "gray20")+
-  ylab("Latitude")+
-  coord_fixed(ylim = c(47.1,48.25),  xlim = c(-123.1,-122.1), ratio = 1.3)+
-  theme(plot.background = element_rect(fill = "white"))
-
-greater_PS_map <- ggplot(usa_spdf_fort, aes(x = long, y = lat, group = group))+
-  # Create grid using geom_vline and geom_hline
-  # geom_vline(xintercept = seq(-123.1, min_lon, 1/nm), color = "gray50", size = 0.1)+
-  # geom_hline(yintercept = seq(min_lat, 48.5, 1/60), color = "gray50", size = 0.1)+
-  #base map
-  geom_polygon(color = "gray20", fill = "gray20")+
-  geom_polygon(data = BC_spdf_fort, aes(x = long, y = lat, group = group), inherit.aes = FALSE) +
-  ylab("Latitude")+
-  coord_fixed(ylim = c(47.1,48.8),  xlim = c(-124.7,-122.1), ratio = 1.3)+
-  theme(plot.background = element_rect(fill = "white"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-
-
-
-
-# Create map in ggplot
-greater_PS_map <- ggplot(usa_spdf_fort, aes(x = long, y = lat, group = group)) +
-  geom_polygon(color = "gray70", fill = rgb(251, 234, 194, max=255)) +
-  geom_polygon(data = BC_spdf_fort, aes(x = long, y = lat, group = group),
-               inherit.aes = FALSE, color = "gray70", fill = rgb(251, 234, 194, max=255)) +
+## draw puget sound
+puget_sound <- ggplot(usa_spdf_fort, aes(x = long, y = lat, group = group)) +
+  geom_polygon(color = "gray70", fill = rgb(251, 234, 194, max = 255)) +
   ylab("Latitude") +
   xlab("Longitude") +
-  coord_fixed(ylim = c(47.1,48.9),  xlim = c(-124.8,-122.1), ratio = 1.3) +
+  coord_fixed(xlim = c(-123.3, -122), ylim = c(46.95, 48.8), ratio = 1.3) +
   theme(plot.background = element_rect(fill = "white"),
         panel.background = element_rect(fill="white", color = "black"),
         panel.border = element_rect(colour = "black", fill=NA, size=1),
         panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  scale_x_continuous(breaks = c(-124.5, -124, -123.5, -123, -122.5),
-                     expand = c(0,0),
-                     labels=c(expression(paste(124.5*degree,"W")),
-                              expression(paste(124*degree,"W")),
-                              expression(paste(123.5*degree,"W")),
-                              expression(paste(123*degree,"W")),
+        panel.grid.minor = element_blank()) + 
+  scale_x_continuous(breaks = c(-123, -122.5),
+                     expand = c(0, 0),
+                     labels=c(expression(paste(123*degree,"W")),
                               expression(paste(122.5*degree,"W")))) +
   scale_y_continuous(breaks = seq(47.5, 48.5, 0.5),
-                     expand = c(0,0),
+                     expand = c(0, 0),
                      labels=c(expression(paste(47.5*degree,"N")),
                               expression(paste(48*degree,"N")),
-                              expression(paste(48.5*degree,"N")))) +
-  # Add line for DPS boundary - from 48.121536, -123.288602 (Green Point) to 48.411782, -123.294625 (McMicking Point in Victoria)
-  annotate("segment", x = -123.288602, xend = -123.294625, y = 48.121536, yend = 48.411782, lty = 2, color = "firebrick4")+
-  annotate("text", label = "DPS Boundary", x = -123.288602, 48.07, size = 4, color = "firebrick4")
+                              expression(paste(48.5*degree,"N")))) + 
+  annotate("segment", x = -122.47, xend = -122.47, y = 47.55,
+           yend = 47.67, lwd = 0.5, color = "black") + 
+  annotate("segment", x = -122.3, xend = -122.3, y = 47.55,
+           yend = 47.67, lwd = 0.5, color = "black") + 
+  annotate("segment", x = -122.3, xend = -122.47, y = 47.55,
+           yend = 47.55, lwd = 0.5, color = "black") + 
+  annotate("segment", x = -122.3, xend = -122.47, y = 47.67,
+           yend = 47.67, lwd = 0.5, color = "black") 
+
+
+## draw elliott bay inset
+elliott_bay <- ggplot(usa_spdf_fort, aes(x = long, y = lat, group = group)) +
+  geom_polygon(color = "gray70", fill = rgb(251, 234, 194, max = 255)) +
+  coord_fixed(xlim = c(-122.47, -122.3), ylim = c(47.55, 47.67),  ratio = 1.3) +
+  theme(plot.background = element_rect(fill = "white"),
+        panel.background = element_rect(fill="white", color = "black"),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.margin = unit(rep(0.1, 4), "cm")) +
+  annotate("segment",
+           x = -122.41347424370157, xend = -122.4197651914652,
+           y = 47.63917076878349, yend = 47.576654192683336,
+           lwd = 0.7, lty = "solid", color = "black") +
+  annotate("text", label = "Elliott\nBay", x = -122.385, y = 47.61, size = 4, color = "black") + 
+  annotate("text", label = "Four Mile Rock", x = -122.4135, y = 47.642,
+           vjust = 0, size = 4, color = "black") + 
+  annotate("text", label = "Alki Point", x = -122.4198, y = 47.571,
+           size = 4, color = "black")
+
+
+## combine maps
+combined_maps <- ggdraw() +
+  draw_plot(puget_sound, x = -0.15) +
+  draw_plot(elliott_bay, x = 0.58, y = 0.5, width = 0.4, height = 0.4)
+
+
+## write map to file
+ggsave(filename = file.path(fig_dir, "fig_01_PS_map.png"), 
+       plot = combined_maps,
+       width = 6, 
+       height = 6,
+       dpi = 300)
+
+
+#### map of Salish Sea ####
+
+# ## load BC shape file
+# BC_shp <- readOGR(dsn = here("analysis", "map_files", "canada", "lpr_000b16a_e.shp"))
+# ## set coord ref system
+# BC_shp_transform <- spTransform(BC_shp, "+init=epsg:4326")
+# ## convert to df(ish)
+# BC_spdf_fort <- tidy(BC_shp_transform)
+
 
