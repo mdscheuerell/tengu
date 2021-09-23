@@ -331,7 +331,7 @@ par(mai = c(0.9, 0.9, 0.1, 0.1))
 matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
         las = 1,
         col = c("dodgerblue", "indianred"),
-        ylab = "Mean size (kg)", xlab = "Year", xaxt = "n")
+        ylab = "Mean mass (kg)", xlab = "Year", xaxt = "n")
 matlines(t(exp(size_both_2u$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
@@ -416,14 +416,14 @@ plot(tengu_max$year, tengu_max$tengu_max_kg,
      las = 1, type = "o", pch = 16, lwd = 2,
      col = "purple", xlim = c(1945, 2020),
      xlab = "Year",
-     ylab = "Maximum size (kg)")
+     ylab = "Maximum mass (kg)")
 
 ## proportion exceeding
 matplot(big_per_angler[,1], big_per_angler[,(2:3)],
         las = 1, pch = 16, xlim = c(1945, 2020),
         lwd = 2, type = "o", lty = "solid",
         col = c("dodgerblue", "darkblue"),
-        xlab = "Year", ylab = "Big fish per angler")
+        xlab = "Year", ylab = "Number of large fish per angler")
 text(1955, 0.72, "5 lbs", col = "dodgerblue")
 text(1955, 0.12, "10 lbs", col = "darkblue")
 ```
