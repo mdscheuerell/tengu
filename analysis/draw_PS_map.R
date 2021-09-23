@@ -67,15 +67,15 @@ elliott_bay <- ggplot(usa_spdf_fort, aes(x = long, y = lat, group = group)) +
         text = element_blank(),
         axis.ticks = element_blank(),
         plot.margin = unit(rep(0.1, 4), "cm")) +
-  annotate("segment",
-           x = -122.41347424370157, xend = -122.4197651914652,
-           y = 47.63917076878349, yend = 47.576654192683336,
-           lwd = 0.7, lty = "solid", color = "black") +
+  # annotate("segment",
+  #          x = -122.41347424370157, xend = -122.4197651914652,
+  #          y = 47.63917076878349 - 1/60, yend = 47.576654192683336 + 1/60,
+  #          lwd = 0.7, lty = "solid", color = "black") +
   annotate("text", label = "Elliott\nBay", x = -122.385, y = 47.61, size = 4, color = "black") + 
-  annotate("text", label = "Four Mile Rock", x = -122.4135, y = 47.642,
-           vjust = 0, size = 4, color = "black") + 
-  annotate("text", label = "Alki Point", x = -122.4198, y = 47.571,
-           size = 4, color = "black")
+  annotate("text", label = "Fourmile Rock", x = -122.377, y = 47.642,
+           vjust = 0, size = 3, color = "black") + 
+  annotate("text", label = "Alki Point", x = -122.387, y = 47.575,
+           size = 3, color = "black")
 
 
 ## combine maps
@@ -83,6 +83,7 @@ combined_maps <- ggdraw() +
   draw_plot(puget_sound, x = -0.15) +
   draw_plot(elliott_bay, x = 0.58, y = 0.5, width = 0.4, height = 0.4)
 
+# combined_maps
 
 ## write map to file
 ggsave(filename = file.path(fig_dir, "fig_01_PS_map.png"), 
