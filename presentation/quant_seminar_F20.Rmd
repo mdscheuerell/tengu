@@ -25,9 +25,9 @@ class: center, middle
 
 USGS Washington Cooperative Fish and Wildlife Research Unit<br>School of Aquatic and Fishery Sciences<br>University of Washington<br>Seattle, WA
 
-.futnote.purple-text[`r icon::fa("envelope")` scheuerl@uw.edu]
+.futnote.purple-text[`r icons::fa("envelope")` scheuerl@uw.edu]
 
-.citation.blue-text[`r icon::fa("twitter")` @mark_scheuerell]
+.citation.blue-text[`r icons::fa("twitter")` @mark_scheuerell]
 
 ---
 
