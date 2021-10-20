@@ -251,6 +251,18 @@ y2 <- tengu_sizes %>%
   t()
 ```
 
+## Plot data
+
+```{r plot_both_sizes, fig.dim = c(6, 4), echo = FALSE}
+par(mai = c(0.9, 0.9, 0.1, 0.1))
+matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
+        las = 1,
+        col = c("dodgerblue", "indianred"),
+        ylab = "Mean mass (kg)", xlab = "Year", xaxt = "n")
+axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+```
+
+
 ## One-state models
 
 ### Unbiased random walk
@@ -303,14 +315,24 @@ mod_list <- list(
 size_both_2u <- MARSS(y2, model = mod_list)
 ```
 
-### Unbiased random walk
+### Random walk with unique biases
 
 ```{r}
 ## update model defn
 mod_list$U <- matrix(c("T", "W"), nrow = 2, ncol = 1)
 
 ## fit biased RW
-size_both_2b <- MARSS(y2, model = mod_list)
+size_both_2b_unique <- MARSS(y2, model = mod_list)
+```
+
+### Random walk with shared bias
+
+```{r}
+## update model defn
+mod_list$U <- matrix(c("u", "u"), nrow = 2, ncol = 1)
+
+## fit biased RW
+size_both_2b_shared <- MARSS(y2, model = mod_list)
 ```
 
 ## Compare models
@@ -318,8 +340,10 @@ size_both_2b <- MARSS(y2, model = mod_list)
 ```{r compare_models_both}
 ## AICc for unbiased RW
 size_both_2u$AICc
-## AICc for biased RW
-size_both_2b$AICc
+## AICc for biased RW with unique bias
+size_both_2b_unique$AICc
+## AICc for biased RW with shared bias
+size_both_2b_shared$AICc
 ```
 
 The unbiased random walk has an AICc score that is slightly greater than the biased random walk, but it's more simple and should be favored here.
@@ -332,7 +356,10 @@ matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
         las = 1,
         col = c("dodgerblue", "indianred"),
         ylab = "Mean mass (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_2u$states)), type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+matlines(t(exp(size_both_2b_shared$states)),
+         type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
+# matlines(t(exp(size_both_2u$states)),
+#          type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 ```
 
