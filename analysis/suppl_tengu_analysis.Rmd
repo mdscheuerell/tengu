@@ -260,6 +260,8 @@ matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
         col = c("dodgerblue", "indianred"),
         ylab = "Mean mass (kg)", xlab = "Year", xaxt = "n")
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+text(13, 8.5, "WDFW", col = "indianred")
+text(18, 3.5, "Tengu", col = "dodgerblue")
 ```
 
 
@@ -361,6 +363,8 @@ matlines(t(exp(size_both_2b_shared$states)),
 # matlines(t(exp(size_both_2u$states)),
 #          type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
+text(13, 8.5, "WDFW", col = "indianred")
+text(18, 3.5, "Tengu", col = "dodgerblue")
 ```
 
 \setlength{\leftskip}{0.5in}
