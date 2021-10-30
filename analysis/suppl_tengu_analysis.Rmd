@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
 library(dplyr)
 library(tidyr)
 library(MARSS)
+library(kableExtra)
 
 ## plot hook to increase margins
 local({
@@ -305,11 +306,8 @@ mod_list <- list(
   B = diag(2),
   U = matrix(0, nrow = 2, ncol = 1),
   Q = matrix(list("T", 0, 0, "W"), 2, 2),
-  # Q = matrix(list("q", 0, 0, "q"), 2, 2),
   Z = diag(2),
-  # A = matrix(c("T", "W"), nrow = 2, ncol = 1),
   A = matrix(c(0, 0), nrow = 2, ncol = 1),
-  # R = matrix(list("r", 0, 0, "r"), 2, 2)
   R = matrix(list("T", 0, 0, "W"), 2, 2)
 )
 
@@ -324,28 +322,37 @@ size_both_2u <- MARSS(y2, model = mod_list)
 mod_list$U <- matrix(c("T", "W"), nrow = 2, ncol = 1)
 
 ## fit biased RW
-size_both_2b_unique <- MARSS(y2, model = mod_list)
+size_both_2b <- MARSS(y2, model = mod_list)
 ```
 
-### Random walk with shared bias
+### Summary of size comparison
 
-```{r}
-## update model defn
-mod_list$U <- matrix(c("u", "u"), nrow = 2, ncol = 1)
+For models without any bias terms, the model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for the presence of two unique temporal patterns in the data. The model with two unique states plus additional bias terms had an AICc of `r round(size_both_2b$AICc, 1)`.
 
-## fit biased RW
-size_both_2b_shared <- MARSS(y2, model = mod_list)
-```
+
+
 
 ## Compare models
 
 ```{r compare_models_both}
-## AICc for unbiased RW
-size_both_2u$AICc
-## AICc for biased RW with unique bias
-size_both_2b_unique$AICc
-## AICc for biased RW with shared bias
-size_both_2b_shared$AICc
+## AICc values from all models
+full_aicc <- c(size_tengu_urw$AICc, size_tengu_brw$AICc)
+late_aicc <- c(size_both_1u$AICc, size_both_1b$AICc,
+              size_both_2u$AICc, size_both_2b$AICc)
+vec_aicc <- c(full_aicc - min(full_aicc),
+              late_aicc - min(late_aicc))
+
+## table of AICc values
+tbl_aicc <- data.frame(bias = rep(c("No", "Yes"), 3),
+                       states_i = c(1, 1, 2, 2, 1, 1),
+                       obs_j = c(1, 1, 2, 2, 2, 2),
+                       aicc = round(vec_aicc, 1))
+
+## print table
+kbl(tbl_aicc, booktabs = T, align = "cccr") %>%
+  kable_styling(position = "center") %>%
+  pack_rows("Full period", 1, 2) %>%
+  pack_rows("Late period", 3, 6)
 ```
 
 The unbiased random walk has an AICc score that is slightly greater than the biased random walk, but it's more simple and should be favored here.
@@ -358,10 +365,8 @@ matplot(t(exp(y2)), type = "o", lty = "solid", lwd = 2, pch = 16,
         las = 1,
         col = c("dodgerblue", "indianred"),
         ylab = "Mean mass (kg)", xlab = "Year", xaxt = "n")
-matlines(t(exp(size_both_2b_shared$states)),
+matlines(t(exp(size_both_2u$states)),
          type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
-# matlines(t(exp(size_both_2u$states)),
-#          type = "l", lty = "dashed", lwd = 1, col = c("dodgerblue", "indianred"))
 axis(1, at = seq(1, 41, 10), labels = seq(1970, 2010, 10))
 text(13, 8.5, "WDFW", col = "indianred")
 text(18, 3.5, "Tengu", col = "dodgerblue")
@@ -380,11 +385,6 @@ text(18, 3.5, "Tengu", col = "dodgerblue")
 \setlength{\rightskip}{0in}
 
 \vspace{0.25in}
-
-### Summary of size comparison
-
-The model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for two unique temporal patterns in the data.
-
 
 # Additional figures for paper
 
