@@ -1,7 +1,7 @@
 ---
 title: "Shifts in the size of Chinook salmon from a culturally important recreational fishery"
-subtitle: "Supplementary material to accompany Quinn et al."
-author: "Mark Scheuerell"
+subtitle: "Supplementary material"
+author: "Tom Quinn, Mark Scheuerell and James Losee"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 output:
   pdf_document:
@@ -74,8 +74,6 @@ size_props <- tengu_data %>%
   filter(!(is.na(p5) & is.na(p10)))
 ```
 
-Here are plots of the two proportional size metrics over time.
-
 ```{r ts_plot_props, fig.dim = c(6, 4), echo = FALSE}
 ## time series plot of fish size metrics
 par(mai = c(0.9, 0.9, 0.1, 0.1))
@@ -100,8 +98,6 @@ text(1955, 0.15, "10 lbs", col = "darkblue")
 \setlength{\rightskip}{0in}
 
 \vspace{0.25in}
-
-There appears to be an overall decline in fish size from 1950 until the early 1980s, when fish sizes increased rapidly before declining again until present.
 
 ## Mean of 5 largest fish
 
@@ -172,14 +168,6 @@ mod_list$U <- matrix("u")
 size_tengu_brw <- MARSS(yy, model = mod_list)
 ```
 
-## Compare models
-
-```{r compare_models}
-## AICc for unbiased RW
-size_tengu_urw$AICc
-## AICc for biased RW
-size_tengu_brw$AICc
-```
 
 ## Plot model fit
 
@@ -327,35 +315,30 @@ size_both_2b <- MARSS(y2, model = mod_list)
 
 ### Summary of size comparison
 
-For models without any bias terms, the model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for the presence of two unique temporal patterns in the data. The model with two unique states plus additional bias terms had an AICc of `r round(size_both_2b$AICc, 1)`.
+An unbiased random walk had more data support than a biased form of the model when fit to the entire time period (Table 1). For models fit to the late time period without any bias terms, the model with one common state has an AICc value of `r round(size_both_1u$AICc, 1)` and the model with two unique states has an AICc value of `r round(size_both_2u$AICc, 1)`, which indicates rather strong support for the presence of two unique temporal patterns in the data. The model with two unique states plus additional bias terms had an AICc of `r round(size_both_2b$AICc, 1)`.
 
-
-
-
-## Compare models
-
-```{r compare_models_both}
+```{r compare_models_both, echo = FALSE}
 ## AICc values from all models
 full_aicc <- c(size_tengu_urw$AICc, size_tengu_brw$AICc)
-late_aicc <- c(size_both_1u$AICc, size_both_1b$AICc,
-              size_both_2u$AICc, size_both_2b$AICc)
+late_aicc <- c(size_both_2u$AICc, size_both_2b$AICc,
+              size_both_1u$AICc, size_both_1b$AICc)
 vec_aicc <- c(full_aicc - min(full_aicc),
               late_aicc - min(late_aicc))
 
 ## table of AICc values
-tbl_aicc <- data.frame(bias = rep(c("No", "Yes"), 3),
-                       states_i = c(1, 1, 2, 2, 1, 1),
-                       obs_j = c(1, 1, 2, 2, 2, 2),
-                       aicc = round(vec_aicc, 1))
+tbl_aicc <- tibble(Bias = rep(c("No", "Yes"), 3),
+                       `States (i)` = c(1, 1, 2, 2, 1, 1),
+                       `Obs (j)` = c(1, 1, 2, 2, 2, 2),
+                       AICc = round(vec_aicc, 1))
 
 ## print table
-kbl(tbl_aicc, booktabs = T, align = "cccr") %>%
+kbl(tbl_aicc, booktabs = T, align = "cccr",
+    caption = "Model selection results for univariate and multivariate models, with and without a bias term.") %>%
   kable_styling(position = "center") %>%
   pack_rows("Full period", 1, 2) %>%
   pack_rows("Late period", 3, 6)
 ```
 
-The unbiased random walk has an AICc score that is slightly greater than the biased random walk, but it's more simple and should be favored here.
 
 ## Plot model fits
 
