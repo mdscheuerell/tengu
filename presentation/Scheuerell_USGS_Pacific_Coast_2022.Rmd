@@ -367,31 +367,33 @@ class: middle
 ## Image credits
 
 .blue-text[
-Camp Harmony: *MOHAI*  
+### Camp Harmony: *MOHAI*  
 
-Blackmouth: *WDFW*  
+### Blackmouth: *WDFW*  
 
-Tengu artwork: *Utagawa Kuniyoshi*
+### Tengu artwork: *Utagawa Kuniyoshi*
 
-Mooching setup: *Andrew Moravec*
+### Mooching setup: *Andrew Moravec*
 
-Tengu derby: *Tom Quinn*   
+### Tengu derby: *Tom Quinn*   
 
-Purse seiner: *Jim Borrow*  
+### Purse seiner: *Jim Borrow*  
 ]
 
 
 ---
 
-## Open science
+## Journal article (open access)
 
-### https://github.com/mdscheuerell/bulltrout
+### https://doi.org/10.1002/mcf2.10205
+
+## Open science
 
 ### https://github.com/mdscheuerell/tengu
 
 ## Presentation
 
-### https://github.com/mdscheuerell/safs-seminar-2021
+### https://github.com/mdscheuerell/tengu/presentation
 
 .futnote.purple-text[`r icon_style(fontawesome("envelope"), fill = "#844870")` scheuerl@uw.edu]
 
