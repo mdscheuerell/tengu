@@ -49,7 +49,7 @@ background-image: url(figs/ohlberger.png)
 background-position: 50% 65%
 background-size: 75%
 
-# Chinook salmon are getting smaller
+# Older Chinook salmon are getting smaller
 
 
 .futnote[ Ohlberger et al. (2018) *Fish and Fisheries*]
@@ -94,14 +94,14 @@ background-position: 100% 50%
 background-size: 26%
 
 .pull-left-wide[
-> ## The name _Tengu_ is from Japanese folklore that describes mythical creatures that were mischievous braggarts. Their long noses are symbolic of exaggerating the truth, which is typical of fish stories.
+> ## The name 'Tengu' is from Japanese folklore that describes mythical creatures that were mischievous braggarts. Their long noses are symbolic of exaggerating the truth, which is typical of fish stories.
 ]
 
 ---
 
 background-image: url(figs/blackmouth_head_wdfw.jpg)
 background-position: 50% 85%
-background-size: 40%
+background-size: 35%
 
 # "Blackmouth" Chinook salmon
 
@@ -350,11 +350,9 @@ class: middle
 # Big picture
 
 .blue-text[
-## The ESA is an unfortunate, but necessary & successful piece of legislation
+## Differences in size suggest something unique going on in Puget Sound relative to Pacific Ocean
 
-## Data quality affects our ability to make decisions
-
-## Great minds <u>do not</u> think alike
+## Tengu Club's meticulous record keeping & willingness to collaborate offered unprecedented analysis
 ]
 
 .futnote.purple-text[`r icon_style(fontawesome("envelope"), fill = "#844870")` scheuerl@uw.edu]
