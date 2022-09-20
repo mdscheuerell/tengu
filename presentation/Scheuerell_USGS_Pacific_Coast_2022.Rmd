@@ -39,7 +39,7 @@ _U.S. Geological Survey<br>Washington Cooperative Fish and Wildlife Research Uni
 
 ## James Losee (WA Dept Fish Wildlife)
 
-## Doug Hanada (Tengu Fishing Club)
+## Doug Hanada (Tengu Club)
 ]
 
 ---
@@ -53,6 +53,26 @@ background-size: 75%
 
 
 .futnote[ Ohlberger et al. (2018) *Fish and Fisheries*]
+
+
+---
+
+# Size of salmon matters because...
+
+.blue-text[
+## bigger females have more eggs & bigger eggs
+]
+
+
+---
+
+# Size of salmon matters because...
+
+.blue-text[
+## bigger females have more eggs & bigger eggs
+
+## fisheries are managed on a per-fish basis & thus smaller fish mean less food
+]
 
 
 ---
@@ -142,6 +162,15 @@ background-size: 70%
 .blue-text[
 ## Catch is carefully scrutinized and recorded
 ]
+
+---
+
+# Questions
+
+.blue-text[
+## Has fish mass changed systematically over the past 70 years?
+]
+
 
 ---
 
@@ -343,6 +372,19 @@ background-size: 80%
 class: middle
 
 # Chinook salmon from .green-text[common origins] with .green-text[different migration patterns] show .green-text[different patterns in size]
+
+
+---
+
+# Big picture
+
+.blue-text[
+## Differences in size suggest something unique going on in Puget Sound relative to Pacific Ocean
+]
+
+.futnote.purple-text[`r icon_style(fontawesome("envelope"), fill = "#844870")` scheuerl@uw.edu]
+
+.citation.blue-text[`r icon_style(fontawesome("twitter"), fill = "#488fdf")` @mark_scheuerell]
 
 
 ---
